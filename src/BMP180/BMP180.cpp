@@ -9,9 +9,9 @@ void BMP180::update() {
   static const CalParams cal = getCP();
 
   int32_t b5 = getB5(cal);
-  this->temp = getTemp(b5);
-  this->press = getPress(b5, cal);
-  this->alt = getAlt(this->press);
+  temp = getTemp(b5);
+  press = getPress(b5, cal);
+  alt = getAlt(press);
   Serial.print(" temp: ");
   Serial.print(temp);
   Serial.print(" press: ");
@@ -93,9 +93,10 @@ int32_t BMP180::getB5(const CalParams cal) {
   return x1 + x2;
 }
 float BMP180::getTemp(int32_t b5) {
+  // return (float)((b5 + 8) >> 4) / 10.0;
   return ((b5 + 8) / pow(2, 4)) / 10.0;
 }
-int32_t BMP180::getPress(int32_t b5, const CalParams cal) {
+float BMP180::getPress(int32_t b5, const CalParams cal) {
   int32_t x1, x2, x3, b3, b6, p;
   uint32_t b4, b7;
 
@@ -133,6 +134,7 @@ int32_t BMP180::getPress(int32_t b5, const CalParams cal) {
   x2 = (-7357 * p) / pow(2, 16);
   return p + (x1 + x2 + 3791) / pow(2, 4);
 }
-int32_t BMP180::getAlt(int32_t p) {
-  return 44330 * (1 - pow(p / 1013.25, 1 / 5.255));
+float BMP180::getAlt(int32_t p) {
+  // return 44330.0 * (1.0 - pow(p / 1013.25, 1 / 5.255));
+  return 44330.0 * (1.0 - pow(p / 101919.3, 0.1903));
 } 
