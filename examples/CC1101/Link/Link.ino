@@ -1,5 +1,5 @@
 #include <SPI.h>
-#include <fastlibs.h>
+#include <fastlib.h>
 
 #define FSPI_MOSI 10
 #define FSPI_MISO 20

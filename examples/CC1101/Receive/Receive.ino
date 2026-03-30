@@ -1,5 +1,5 @@
 #include <SPI.h>
-#include <fastlibs.h>
+#include <fastlib.h>
 
 #define MISO 21
 #define SCK 13

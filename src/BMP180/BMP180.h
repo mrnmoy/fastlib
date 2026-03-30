@@ -37,7 +37,10 @@ struct CalParams {
 
 class BMP180 {
   public:
-    BMP180(uint8_t oss = 0, TwoWire &wire = Wire): oss(oss), bus(BMP180_REG_ADDR, wire) {};
+    BMP180(uint8_t oss = 0, float seaLevelPress = 101325.0, TwoWire &wire = Wire): 
+      oss(oss), 
+      slp(seaLevelPress * 100.0),
+      bus(BMP180_REG_ADDR, wire) {};
 
   float temp, press, alt;
 
@@ -46,16 +49,16 @@ class BMP180 {
 
   private: 
     Bus bus;
-    uint8_t oss;
-    CalParams cal;
+    const uint8_t oss;
+    const float slp;
 
-    void getCP(); 
+    CalParams getCP(); 
     int32_t getUT();
     int32_t getUP();
-    int32_t getB5();
+    int32_t getB5(const CalParams cal);
     float getTemp(int32_t b5); 
-    int32_t getPress(int32_t b5); 
-    int32_t getAlt(); 
+    float getPress(int32_t b5, const CalParams cal); 
+    float getAlt(int32_t p, const float slp); 
 };
 
 #endif

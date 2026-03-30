@@ -3,25 +3,19 @@
 bool BMP180::begin() {
   if (bus.read(BMP180_REG_CHIP_ID) != BMP180_CHIP_ID) return false;
 
-  getCP();
-  update();
-
   return true;
 }
 void BMP180::update() {
-  int32_t b5 = getB5();
+  static const CalParams cal = getCP();
+
+  int32_t b5 = getB5(cal);
   temp = getTemp(b5);
-  press = getPress(b5);
-  alt = getAlt();
-  Serial.print(" temp: ");
-  Serial.print(temp);
-  Serial.print(" press: ");
-  Serial.print(press);
-  Serial.print(" alt: ");
-  Serial.println(alt);
+  press = getPress(b5, cal);
+  alt = getAlt(press, slp);
 }
 
-void BMP180::getCP() {
+CalParams BMP180::getCP() {
+  CalParams cal;
   byte calData[22];
   bus.readBurst(0xAA, calData, 22);
   cal.ac1 = (calData[0] << 8) | calData[1];
@@ -35,29 +29,7 @@ void BMP180::getCP() {
   cal.mb = (calData[16] << 8) | calData[17];
   cal.mc = (calData[18] << 8) | calData[19];
   cal.md = (calData[20] << 8) | calData[21];
-
-  Serial.print("ac1: ");
-  Serial.print(cal.ac1);
-  Serial.print(" ac2: ");
-  Serial.print(cal.ac2);
-  Serial.print(" ac3: ");
-  Serial.print(cal.ac3);
-  Serial.print(" ac4: ");
-  Serial.print(cal.ac4);
-  Serial.print(" ac5: ");
-  Serial.print(cal.ac5);
-  Serial.print(" ac6: ");
-  Serial.print(cal.ac6);
-  Serial.print(" b1: ");
-  Serial.print(cal.b1);
-  Serial.print(" b2: ");
-  Serial.print(cal.b2);
-  Serial.print(" mb: ");
-  Serial.print(cal.mb);
-  Serial.print(" mc: ");
-  Serial.print(cal.mc);
-  Serial.print(" md: ");
-  Serial.println(cal.md);
+  return cal;
 } 
 int32_t BMP180::getUT() {
   bus.write(0xF4, 0x2E);
@@ -82,55 +54,34 @@ int32_t BMP180::getUP() {
   }
   return bus.read24(BMP180_REG_MEAS) >> (8 - oss);
 }
-int32_t BMP180::getB5() {
-  // int32_t x1 = ((getUT() - cal.ac6) * cal.ac5) >> 15;
-  // int32_t x2 = (cal.mc << 11) / (x1 + cal.md);
-  // return x1 + x2;
-
-  int32_t x1 = ((getUT() - cal.ac6) * cal.ac5) / pow(2, 15);
-  int32_t x2 = (cal.mc * pow(2, 11)) / (x1 + cal.md);
+int32_t BMP180::getB5(const CalParams cal) {
+  int32_t x1 = ((getUT() - cal.ac6) * cal.ac5) / 32768;
+  int32_t x2 = (cal.mc * 2048) / (x1 + cal.md);
   return x1 + x2;
 }
 float BMP180::getTemp(int32_t b5) {
-  return ((b5 + 8) / pow(2, 4)) / 10.0;
+  return ((b5 + 8.0) / 16.0) / 10.0;
 }
-int32_t BMP180::getPress(int32_t b5) {
+float BMP180::getPress(int32_t b5, const CalParams cal) {
   int32_t x1, x2, x3, b3, b6, p;
   uint32_t b4, b7;
-  // b6 = b5 - 4000;
-  // x1 = (cal.b2 * (b6 * b6 >> 12)) >> 11;
-  // x2 = (cal.ac2 * b6) >> 11;
-  // x3 = x1 + x2;
-  // b3 = ((((cal.ac1 * 4) + x3) << oss) + 2) / 4;
-  // x1 = (cal.ac3 * b6) >> 13;
-  // x2 = (cal.b1 * ((b6 * b6) >> 12)) >> 16;
-  // x3 = ((x1 + x2) + 2) >> 2;
-  // b4 = (cal.ac4 * (uint32_t)(x3 + 32768)) >> 15; 
-  // b7 = (uint32_t)(getUP() - b3) * (50000 >> oss);
-  // if (b7 < 0x80000000) p = (b7 * 2) / b4;
-  // else p = (b7 / b4) * 2;
-  // x1 = (p >> 8) * (p >> 8);
-  // x1 = (x1 * 3038) >> 16;
-  // x2 = (-7357 * p) >> 16;
-  // return (p + ((x1 + x2) + 3791)) >> 4;
-
   b6 = b5 - 4000;
-  x1 = (cal.b2 * (b6 * b6 / pow(2, 12))) / pow(2, 11);
-  x2 = cal.ac2 * b6 / pow(2, 11);
+  x1 = (cal.b2 * (b6 * b6 / 4096)) / 2048;
+  x2 = cal.ac2 * b6 / 2048;
   x3 = x1 + x2;
   b3 = (((cal.ac1 * 4 + x3) << oss) + 2) / 4;
-  x1 = cal.ac3 * b6 / pow(2, 13);
-  x2 = (cal.b1 * (b6 * b6 / pow(2, 12))) / pow(2, 10);
-  x3 = ((x1 + x2) + 2) / pow(2, 2);
-  b4 = cal.ac4 * (uint32_t)(x3 + 32768) / pow(2, 15); 
+  x1 = cal.ac3 * b6 / 8192;
+  x2 = (cal.b1 * (b6 * b6 / 4096)) / 1024;
+  x3 = ((x1 + x2) + 2) / 4;
+  b4 = cal.ac4 * (uint32_t)(x3 + 32768) / 32768; 
   b7 = ((uint32_t)getUP() - b3) * (50000 >> oss);
   if (b7 < 0x80000000) p = (b7 * 2) / b4;
   else p = (b7 / b4) * 2;
-  x1 = (p / pow(2, 8)) * (p / pow(2, 8));
-  x1 = (x1 * 3038) / pow(2, 16);
-  x2 = (-7357 * p) / pow(2, 16);
-  return p + (x1 + x2 + 3791) / pow(2, 4);
+  x1 = (p / 256) * (p / 256);
+  x1 = (x1 * 3038) / 65536;
+  x2 = (-7357 * p) / 65536;
+  return p + (x1 + x2 + 3791) / 16.0;
 }
-int32_t BMP180::getAlt() {
-  return 44330 * (1 - pow(press / 1013.25, 1 / 5.255));
+float BMP180::getAlt(int32_t p, const float slp) {
+  return 44330.0 * (1.0 - pow(p / slp, 0.1903));
 } 
