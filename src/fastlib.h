@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef fastlibs
-#define fastlibs
+#ifndef fastlib
+#define fastlib
 
 #include "CC1101/CC1101.h"
 #include "NEO6M/NEO6M.h"
