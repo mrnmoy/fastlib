@@ -132,7 +132,7 @@ class CC1101 {
 
   bool begin();
 
-  bool read(uint8_t *buff);
+  bool read(uint8_t *buff, uint32_t timeoutMs = -1);
   bool write(uint8_t *buff);
   bool link(uint8_t *txBuff, uint8_t *rxBuff, const uint16_t timeoutMs = 500);
   void link2(uint8_t *txBuff, uint8_t *rxBuff, const uint16_t timeoutMs = 500);
@@ -228,7 +228,7 @@ class CC1101 {
     void setTwoWay();
 
     bool enoughRxBytes();
-    void waitForRxBytes();
+    bool waitForRxBytes(uint32_t timeoutMs);
     void readRxFifo(uint8_t *buff);
     void writeTxFifo(uint8_t *buff);
 };
