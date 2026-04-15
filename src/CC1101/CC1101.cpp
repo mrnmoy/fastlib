@@ -21,7 +21,8 @@ bool CC1101::begin() {
   setManchester(isManchester);
   setAppendStatus(isAppendStatus);
   setDataWhitening(isDataWhitening);
-  setVariablePktLen(isVariablePktLen, pktLen);
+  setPktLen(pktLen);
+  setPktLenMode(isVariablePktLen);
   setSync(syncMode, syncWord, preambleLen);
 
   return true;
@@ -31,12 +32,31 @@ bool CC1101::read(uint8_t *buff, uint32_t timeoutMs){
   setIdleState();
   flushRxBuff();
   setRxState();
-  if(!waitForRxBytes(timeoutMs)) return false; //timeout
+  if(!waitForRxBytes(pktLen, timeoutMs)) return false; //timeout
+  readRxFifo(buff);
+  waitForState();
+  return true;
+};
+bool CC1101::read(uint8_t *buff, uint8_t len, uint32_t timeoutMs){
+  setPktLen(len);
+  setIdleState();
+  flushRxBuff();
+  setRxState();
+  if(!waitForRxBytes(len, timeoutMs)) return false; //timeout
   readRxFifo(buff);
   waitForState();
   return true;
 };
 bool CC1101::write(uint8_t *buff){
+  setIdleState();
+  flushTxBuff();
+  setTxState();
+  writeTxFifo(buff);
+  waitForState();
+  return true;
+};
+bool CC1101::write(uint8_t *buff, uint8_t len){
+  setPktLen(len);
   setIdleState();
   flushTxBuff();
   setTxState();
@@ -53,7 +73,7 @@ bool CC1101::link(uint8_t *txBuff, uint8_t *rxBuff, const uint16_t timeoutMs) {
   waitForState();
   flushRxBuff();
   setRxState();
-  while (!enoughRxBytes()) {
+  while (!enoughRxBytes(pktLen)) {
     if (millis() - lastMillis > timeoutMs) {
       return false; // timeout
     }
@@ -207,9 +227,11 @@ void CC1101::setAppendStatus(bool en) {
 void CC1101::setDataWhitening(bool en) {
   bus.writeField(CC1101_REG_PKTCTRL0, (byte)en, 6, 6);
 };
-void CC1101::setVariablePktLen(bool en, uint8_t pktlLen) {
-  bus.writeField(CC1101_REG_PKTCTRL0, (byte)en, 1, 0); /* todo: 2 */
+void CC1101::setPktLen(uint8_t len) {
   bus.write(CC1101_REG_PKTLEN, pktLen);
+};
+void CC1101::setPktLenMode(bool en) {
+  bus.writeField(CC1101_REG_PKTCTRL0, (byte)en, 1, 0); /* todo: 2 */
 };
 void CC1101::setMod(CC1101_Modulation mod){
   bus.writeField(CC1101_REG_MDMCFG2, (uint8_t)mod, 6, 4);
@@ -285,19 +307,19 @@ void CC1101::setTwoWay() {
     bus.writeField(CC1101_REG_MCSM1, 2, 3, 2); /* Set RXOFF to TX */
 };
 
-bool CC1101::enoughRxBytes() {
-  if (bus.readField(CC1101_REG_RXBYTES, 6, 0) < (pktLen + (isVariablePktLen ? 1 : 0) + (addr > 0 ? 1 : 0))) return false;
+bool CC1101::enoughRxBytes(uint8_t len) {
+  if (bus.readField(CC1101_REG_RXBYTES, 6, 0) < (len + (isVariablePktLen ? 1 : 0) + (addr > 0 ? 1 : 0))) return false;
   return true;
 };
-bool CC1101::waitForRxBytes(uint32_t timeoutMs) {
+bool CC1101::waitForRxBytes(uint8_t len, uint32_t timeoutMs) {
   if (timeoutMs != -1) {
     uint32_t timer = millis();
-    while(!enoughRxBytes()) {
+    while(!enoughRxBytes(len)) {
       if(millis() > (timer + timeoutMs)) return false;
       delayMicroseconds(50);
     }
   } else {
-    while (!enoughRxBytes()) delayMicroseconds(50);
+    while (!enoughRxBytes(len)) delayMicroseconds(50);
   }
   return true;
 };
