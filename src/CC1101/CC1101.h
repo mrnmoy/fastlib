@@ -91,7 +91,7 @@ class CC1101 {
         double freq = 433.8,
         double drate = 4.0,
         CC1101_PowerMW pwr = CC1101_POWER_1MW,
-        byte addr = 0,
+        uint8_t addr = 0,
         uint8_t pktLen = 4,
         CC1101_SyncMode syncMode = CC1101_SYNC_MODE_16_16,
         uint16_t syncWord = 0x1234,
@@ -103,8 +103,8 @@ class CC1101 {
         bool isAppendStatus = true,
         bool isDataWhitening = false,
         bool isVariablePktLen = false,
-        int8_t ss = SS,
-        int8_t miso = MISO,
+        uint8_t ss = SS,
+        uint8_t miso = MISO,
         SPIClass &spi = SPI
         ):
       mod(mod),
@@ -124,7 +124,6 @@ class CC1101 {
       isDataWhitening(isDataWhitening),
       isVariablePktLen(isVariablePktLen),
       ss(ss),
-      miso(miso),
       bus(ss, miso, spi) {};
 
   int8_t partnum = -1, version = -1;
@@ -132,12 +131,12 @@ class CC1101 {
 
   bool begin();
 
-  bool read(uint8_t *buff, uint32_t timeoutMs = -1);
-  bool read(uint8_t *buff, uint8_t len, uint32_t timeoutMs = -1);
+  bool read(uint8_t *buff, const int32_t timeoutMs = -1);
+  bool read(uint8_t *buff, uint8_t len, const int32_t timeoutMs = -1);
   bool write(uint8_t *buff);
   bool write(uint8_t *buff, uint8_t len);
-  bool link(uint8_t *txBuff, uint8_t *rxBuff, const uint16_t timeoutMs = 500);
-  void link2(uint8_t *txBuff, uint8_t *rxBuff, const uint16_t timeoutMs = 500);
+  bool link(uint8_t *txBuff, uint8_t *rxBuff, const int32_t timeoutMs = 500);
+  void link2(uint8_t *txBuff, uint8_t *rxBuff, const int32_t timeoutMs = 500);
 
   private: 
     enum State {
@@ -181,7 +180,7 @@ class CC1101 {
     };
      
     Bus bus;
-    byte ss, miso;
+    byte ss;
 
     CC1101_Modulation mod;
     CC1101_SyncMode syncMode;

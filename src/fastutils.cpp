@@ -1,6 +1,23 @@
 #include "fastutils.h"
 
 #if isSPI
+  #if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C3)
+    void Bus::spiStart() {
+      spi.beginTransaction(spiSettings);
+      digitalWrite(ss, LOW);
+    }
+  #else
+    void Bus::spiStart() {
+      spi.beginTransaction(spiSettings);
+      digitalWrite(ss, LOW);
+      while (digitalRead(miso));
+    }
+  #endif
+  void Bus::spiStop() {
+    digitalWrite(ss, HIGH);
+    spi.endTransaction();
+  }
+
   byte Bus::strobe(byte addr) {
     spiStart();
     byte data = spi.transfer(addr);
@@ -8,6 +25,7 @@
     return data;
   }
   uint8_t Bus::read(byte addr) {
+    Serial.println("Bus::read spi");
     spiStart();
     spi.transfer(addr);
     uint8_t data = spi.transfer(0);
@@ -42,23 +60,7 @@
     spi.transfer(val);
     spiStop();
   }
-
-  #if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C3)
-    void Bus::spiStart() {
-      spi.beginTransaction(spiSettings);
-      digitalWrite(ss, LOW);
-    }
-  #else
-    void Bus::spiStart() {
-      spi.beginTransaction(spiSettings);
-      digitalWrite(ss, LOW);
-      while (digitalRead(miso));
-    }
-  #endif
-  void Bus::spiStop() {
-    digitalWrite(ss, HIGH);
-    spi.endTransaction();
-  }
+  void Bus::writeBurst(byte addr, byte *buff, uint8_t len) {}
 #else
   byte Bus::strobe(byte addr) {
     wire.beginTransmission(i2cAddr);
@@ -67,6 +69,8 @@
     return data;
   }
   uint8_t Bus::read(byte addr) {
+    Serial.println("Bus::read i2c");
+    Serial.printf("isSPI: %d, miso: %d, ss: %d", isSPI, miso, ss);
     wire.beginTransmission(i2cAddr);
     wire.write(addr);
     wire.endTransmission();
@@ -104,6 +108,7 @@
   }
   void Bus::writeBurst(byte addr, byte *buff, uint8_t len) {}
 #endif
+
 uint8_t Bus::readField(byte addr, byte hi, byte lo) {
   return read((addr) >> lo) & ((1 << (hi - lo + 1)) -1);
 }

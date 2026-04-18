@@ -22,19 +22,19 @@ class Bus {
       i2cAddr(i2cAddr),
       wire(wire),
       spi(SPI) {};
-    Bus(byte ss = SS, byte miso = MISO, SPIClass &spi = SPI): 
+    Bus(byte ss = SS, byte miso = MISO, SPIClass &spi = SPI, SPISettings spiSettings = SPISettings(SPI_MAX_FREQ, SPI_DATA_ORDER, SPI_DATA_MODE)): 
       isSPI(true),
       wire(Wire),
       ss(ss),
       miso(miso),
       spi(spi),
-      spiSettings(SPI_MAX_FREQ, SPI_DATA_ORDER, SPI_DATA_MODE) {};
+      spiSettings(spiSettings) {};
 
     bool isSPI;
+    byte i2cAddr, ss, miso;
     TwoWire &wire;
     SPIClass &spi;
-    SPISettings spiSettings = SPISettings();
-    byte i2cAddr, ss, miso;
+    SPISettings spiSettings;
 
     byte strobe(byte addr);
     uint8_t read(byte addr);

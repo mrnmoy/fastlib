@@ -1,6 +1,6 @@
 #include "CC1101.h"
 
-bool CC1101::begin() {
+bool CC1101::begin() { 
   reset();
   delayMicroseconds(50);
 
@@ -28,7 +28,7 @@ bool CC1101::begin() {
   return true;
 }
 
-bool CC1101::read(uint8_t *buff, uint32_t timeoutMs){
+bool CC1101::read(uint8_t *buff, const int32_t timeoutMs){
   setIdleState();
   flushRxBuff();
   setRxState();
@@ -37,7 +37,7 @@ bool CC1101::read(uint8_t *buff, uint32_t timeoutMs){
   waitForState();
   return true;
 };
-bool CC1101::read(uint8_t *buff, uint8_t len, uint32_t timeoutMs){
+bool CC1101::read(uint8_t *buff, uint8_t len, const int32_t timeoutMs){
   setPktLen(len);
   setIdleState();
   flushRxBuff();
@@ -64,7 +64,7 @@ bool CC1101::write(uint8_t *buff, uint8_t len){
   waitForState();
   return true;
 };
-bool CC1101::link(uint8_t *txBuff, uint8_t *rxBuff, const uint16_t timeoutMs) {
+bool CC1101::link(uint8_t *txBuff, uint8_t *rxBuff, const int32_t timeoutMs) {
   uint32_t lastMillis = millis();
   setIdleState();
   flushTxBuff();
@@ -83,7 +83,7 @@ bool CC1101::link(uint8_t *txBuff, uint8_t *rxBuff, const uint16_t timeoutMs) {
   waitForState();
   return true;
 };
-void CC1101::link2(uint8_t *txBuff, uint8_t *rxBuff, const uint16_t timeoutMs) {
+void CC1101::link2(uint8_t *txBuff, uint8_t *rxBuff, const int32_t timeoutMs) {
   uint32_t lastMillis;
   setIdleState();
   setTwoWay();
