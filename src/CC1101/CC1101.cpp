@@ -52,9 +52,7 @@ bool CC1101::write(uint8_t *buff){
   flushTxBuff();
   setTxState();
   writeTxFifo(buff, pktLen);
-  Serial.println("waiting for state idle");
   waitForState();
-  Serial.println("succesfully written");
   return true;
 };
 bool CC1101::write(uint8_t *buff, uint8_t len){
@@ -63,9 +61,7 @@ bool CC1101::write(uint8_t *buff, uint8_t len){
   flushTxBuff();
   setTxState();
   writeTxFifo(buff, len);
-  Serial.println("waiting for state idle");
   waitForState();
-  Serial.println("succesfully written");
   return true;
 };
 bool CC1101::link(uint8_t *txBuff, uint8_t *rxBuff, const int32_t timeoutMs) {
@@ -348,5 +344,5 @@ void CC1101::writeTxFifo(uint8_t *buff, uint8_t len) {
   // if(addr > 0) {
   //   bus.write(CC1101_REG_FIFO, addr);
   // }
-  bus.writeBurst(CC1101_REG_FIFO, buff, len);
+  bus.writeBurst(CC1101_REG_FIFO | CC1101_WRITE_BURST, buff, len);
 };

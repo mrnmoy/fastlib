@@ -52,7 +52,7 @@ void setup() {
 }
 
 void loop() {
-  if (radio.write(txBuff)) {
+  if (radio.write(txBuff, 4)) {
     Serial.print("Sent: [");
     for (int i = 0; i < sizeof(txBuff); i++) {
       if (i != 0) Serial.print(", ");
