@@ -33,7 +33,7 @@ bool CC1101::read(uint8_t *buff, const int32_t timeoutMs){
   flushRxBuff();
   setRxState();
   if(!waitForRxBytes(pktLen, timeoutMs)) return false; //timeout
-  readRxFifo(buff);
+  readRxFifo(buff, pktLen);
   waitForState();
   return true;
 };
@@ -43,7 +43,7 @@ bool CC1101::read(uint8_t *buff, uint8_t len, const int32_t timeoutMs){
   flushRxBuff();
   setRxState();
   if(!waitForRxBytes(len, timeoutMs)) return false; //timeout
-  readRxFifo(buff);
+  readRxFifo(buff, len);
   waitForState();
   return true;
 };
@@ -51,17 +51,24 @@ bool CC1101::write(uint8_t *buff){
   setIdleState();
   flushTxBuff();
   setTxState();
-  writeTxFifo(buff);
+  writeTxFifo(buff, pktLen);
   waitForState();
   return true;
 };
 bool CC1101::write(uint8_t *buff, uint8_t len){
+  Serial.println("setting pktLen");
   setPktLen(len);
+  Serial.println("setting state idle");
   setIdleState();
+  Serial.println("flashing txbuff");
   flushTxBuff();
+  Serial.println("setting state tx");
   setTxState();
-  writeTxFifo(buff);
+  Serial.println("writing txfifo");
+  writeTxFifo(buff, len);
+  Serial.println("waiting for state idle");
   waitForState();
+  Serial.println("succesfully written");
   return true;
 };
 bool CC1101::link(uint8_t *txBuff, uint8_t *rxBuff, const int32_t timeoutMs) {
@@ -69,7 +76,7 @@ bool CC1101::link(uint8_t *txBuff, uint8_t *rxBuff, const int32_t timeoutMs) {
   setIdleState();
   flushTxBuff();
   setTxState();
-  writeTxFifo(txBuff);
+  writeTxFifo(txBuff, pktLen);
   waitForState();
   flushRxBuff();
   setRxState();
@@ -79,7 +86,7 @@ bool CC1101::link(uint8_t *txBuff, uint8_t *rxBuff, const int32_t timeoutMs) {
     }
     delay(1); // avoid watchdog
   }
-  readRxFifo(rxBuff);
+  readRxFifo(rxBuff, pktLen);
   waitForState();
   return true;
 };
@@ -90,7 +97,7 @@ void CC1101::link2(uint8_t *txBuff, uint8_t *rxBuff, const int32_t timeoutMs) {
   setTxState();
   while(true) {
     flushTxBuff();
-    writeTxFifo(txBuff);
+    writeTxFifo(txBuff, pktLen);
     waitForState(STATE_RX);
     Serial.println("Sent packet.");
     flushRxBuff();
@@ -100,7 +107,7 @@ void CC1101::link2(uint8_t *txBuff, uint8_t *rxBuff, const int32_t timeoutMs) {
       Serial.println(getState());
       if (bus.readField(CC1101_REG_RXBYTES, 6, 0) != 0) {
         Serial.println("rxbytes > 0");
-        readRxFifo(rxBuff);
+        readRxFifo(rxBuff, pktLen);
         waitForState(STATE_TX);
         Serial.println("Received packet.");
         break;
@@ -323,11 +330,11 @@ bool CC1101::waitForRxBytes(uint8_t len, uint32_t timeoutMs) {
   }
   return true;
 };
-void CC1101::readRxFifo(uint8_t *buff) {
+void CC1101::readRxFifo(uint8_t *buff, uint8_t len) {
   if(isVariablePktLen) {
-    pktLen = bus.read(CC1101_REG_FIFO);
+    len = bus.read(CC1101_REG_FIFO);
   }
-  bus.readBurst(CC1101_REG_FIFO, buff, pktLen);
+  bus.readBurst(CC1101_REG_FIFO, buff, len);
   if(isAppendStatus) {
     uint8_t r = bus.read(CC1101_REG_FIFO);
     if(r >= 128) rssi = ((rssi - 256) / 2) - CC1101_RSSI_OFFSET;
@@ -336,13 +343,13 @@ void CC1101::readRxFifo(uint8_t *buff) {
     // if(!(r >> 7) & 1) return false; // CRC Mismatch
   }
 };
-void CC1101::writeTxFifo(uint8_t *buff) {
+void CC1101::writeTxFifo(uint8_t *buff, uint8_t len) {
   if(isVariablePktLen) {
-    pktLen = sizeof(buff);
-    bus.write(CC1101_REG_FIFO, pktLen);
+    len = sizeof(buff);
+    bus.write(CC1101_REG_FIFO, len);
   }
   // if(addr > 0) {
   //   bus.write(CC1101_REG_FIFO, addr);
   // }
-  bus.writeBurst(CC1101_REG_FIFO, buff, pktLen);
+  bus.writeBurst(CC1101_REG_FIFO, buff, len);
 };
