@@ -52,19 +52,16 @@ bool CC1101::write(uint8_t *buff){
   flushTxBuff();
   setTxState();
   writeTxFifo(buff, pktLen);
+  Serial.println("waiting for state idle");
   waitForState();
+  Serial.println("succesfully written");
   return true;
 };
 bool CC1101::write(uint8_t *buff, uint8_t len){
-  Serial.println("setting pktLen");
   setPktLen(len);
-  Serial.println("setting state idle");
   setIdleState();
-  Serial.println("flashing txbuff");
   flushTxBuff();
-  Serial.println("setting state tx");
   setTxState();
-  Serial.println("writing txfifo");
   writeTxFifo(buff, len);
   Serial.println("waiting for state idle");
   waitForState();

@@ -77,7 +77,14 @@ class Bus<false> {
       uint8_t mask = ((1 << (hi - lo + 1)) -1) << lo;
       write(addr, (read(addr) & ~mask) | ((val <<= lo) & mask));
     }
-    void writeBurst(byte addr, byte *buff, uint8_t len) {}
+    void writeBurst(byte addr, byte *buff, uint8_t len) {
+      wire.beginTransmission(i2cAddr);
+      wire.write(addr);
+      for (uint8_t i = 0; i < len; i++) {
+        wire.write(buff[i]);
+      }
+      wire.endTransmission();
+    }
 
   private:
 };
@@ -143,7 +150,14 @@ class Bus<true> {
       uint8_t mask = ((1 << (hi - lo + 1)) -1) << lo;
       write(addr, (read(addr) & ~mask) | ((val <<= lo) & mask));
     }
-    void writeBurst(byte addr, byte *buff, uint8_t len) {}
+    void writeBurst(byte addr, byte *buff, uint8_t len) {
+      spiStart();
+      spi.transfer(addr);
+      for (uint8_t i = 0; i < len; i++) {
+        spi.transfer(buff[i]);
+      }
+      spiStop();
+    }
 
   private:
     void spiStart() {

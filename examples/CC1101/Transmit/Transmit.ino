@@ -1,14 +1,29 @@
 #include <SPI.h>
 #include <fastlib.h>
 
-#define SCK 14
-#define MISO 12
-#define MOSI 13
-#define SS 15
+#define SCK 7
+#define MISO 5
+#define MOSI 16
+#define SS 18
 
-#define LED_PIN 2
-
-CC1101 radio;
+CC1101 radio(CC1101_MOD_2FSK,
+             433.8,
+             4.0,
+             CC1101_POWER_1MW,
+             0,
+             4,
+             CC1101_SYNC_MODE_16_16,
+             0x1234,
+             64,
+             true,
+             false,
+             true,
+             false,
+             true,
+             false,
+             false,
+             SS,
+             MISO);
 
 byte txBuff[4] = { 200, 201, 202, 203 };
 
@@ -24,13 +39,11 @@ void setup() {
   pinMode(MOSI, OUTPUT);
   pinMode(SS, OUTPUT);
 
-  pinMode(LED_PIN, OUTPUT);
-
   digitalWrite(SS, HIGH);
 
-  SPI.begin();
+  SPI.begin(SCK, MISO, MOSI, SS);
 
-  while (!radio.init()) {
+  while (!radio.begin()) {
     Serial.println("Radio not found!");
     delay(2000);
   }
@@ -39,7 +52,6 @@ void setup() {
 }
 
 void loop() {
-  digitalWrite(LED_PIN, LOW);
   if (radio.write(txBuff)) {
     Serial.print("Sent: [");
     for (int i = 0; i < sizeof(txBuff); i++) {
@@ -51,7 +63,6 @@ void loop() {
   } else {
     Serial.println("Error sending packet");
   }
-  digitalWrite(LED_PIN, HIGH);
 
   delay(2000);
 }
