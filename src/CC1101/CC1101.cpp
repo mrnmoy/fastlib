@@ -28,7 +28,7 @@ bool CC1101::begin() {
   return true;
 }
 
-bool CC1101::read(uint8_t *buff, const int32_t timeoutMs){
+bool CC1101::read(uint8_t *buff, size_t timeoutMs){
   setIdleState();
   flushRxBuff();
   setRxState();
@@ -37,14 +37,22 @@ bool CC1101::read(uint8_t *buff, const int32_t timeoutMs){
   waitForState();
   return true;
 };
-bool CC1101::read(uint8_t *buff, uint8_t len, const int32_t timeoutMs){
+bool CC1101::read(uint8_t *buff, uint8_t len, size_t timeoutMs){
+  Serial.println("setting pktlen");
   setPktLen(len);
+  Serial.println("setting idle state");
   setIdleState();
+  Serial.println("flushing rxbuff");
   flushRxBuff();
+  Serial.println("setting rx state");
   setRxState();
+  Serial.println("waiting for rxbytes");
   if(!waitForRxBytes(len, timeoutMs)) return false; //timeout
+  Serial.println("reading rxfifo");
   readRxFifo(buff, len);
+  Serial.println("waiting for idle state");
   waitForState();
+  Serial.println("succesfully read rxfifo");
   return true;
 };
 bool CC1101::write(uint8_t *buff){
@@ -64,7 +72,7 @@ bool CC1101::write(uint8_t *buff, uint8_t len){
   waitForState();
   return true;
 };
-bool CC1101::link(uint8_t *txBuff, uint8_t *rxBuff, const int32_t timeoutMs) {
+bool CC1101::link(uint8_t *txBuff, uint8_t *rxBuff, size_t timeoutMs) {
   uint32_t lastMillis = millis();
   setIdleState();
   flushTxBuff();
@@ -83,7 +91,7 @@ bool CC1101::link(uint8_t *txBuff, uint8_t *rxBuff, const int32_t timeoutMs) {
   waitForState();
   return true;
 };
-void CC1101::link2(uint8_t *txBuff, uint8_t *rxBuff, const int32_t timeoutMs) {
+void CC1101::link2(uint8_t *txBuff, uint8_t *rxBuff, size_t timeoutMs) {
   uint32_t lastMillis;
   setIdleState();
   setTwoWay();
@@ -309,13 +317,14 @@ void CC1101::setTwoWay() {
 
 bool CC1101::enoughRxBytes(uint8_t len) {
   if (bus.readField(CC1101_REG_RXBYTES, 6, 0) < (len + (isVariablePktLen ? 1 : 0) + (addr > 0 ? 1 : 0))) return false;
+  Serial.printf("rxbytes: %d\n", bus.readField(CC1101_REG_RXBYTES, 6, 0));
   return true;
 };
-bool CC1101::waitForRxBytes(uint8_t len, uint32_t timeoutMs) {
-  if (timeoutMs != -1) {
+bool CC1101::waitForRxBytes(uint8_t len, size_t timeoutMs) {
+  if (timeoutMs) {
     uint32_t timer = millis();
     while(!enoughRxBytes(len)) {
-      if(millis() > (timer + timeoutMs)) return false;
+      if((timer + timeoutMs) < millis()) return false;
       delayMicroseconds(50);
     }
   } else {
@@ -327,7 +336,8 @@ void CC1101::readRxFifo(uint8_t *buff, uint8_t len) {
   if(isVariablePktLen) {
     len = bus.read(CC1101_REG_FIFO);
   }
-  bus.readBurst(CC1101_REG_FIFO, buff, len);
+  bus.readBurst(CC1101_REG_FIFO | CC1101_READ_BURST, buff, len);
+  // bus.readBurst(0x80 | 0x40 | (CC1101_REG_FIFO & 0b111111), buff, len);
   if(isAppendStatus) {
     uint8_t r = bus.read(CC1101_REG_FIFO);
     if(r >= 128) rssi = ((rssi - 256) / 2) - CC1101_RSSI_OFFSET;
