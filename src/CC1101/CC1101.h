@@ -179,7 +179,7 @@ class CC1101 {
       [CC1101_FREQ_BAND_915] = { 0x03, 0x0e, 0x1e, 0x27, 0x8e, 0xcd, 0xc7, 0xc0 },
     };
      
-    Bus bus;
+    Bus<true> bus;
     byte ss;
 
     CC1101_Modulation mod;

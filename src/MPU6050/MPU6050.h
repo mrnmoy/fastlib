@@ -31,7 +31,7 @@ class MPU6050 {
   uint16_t temp;
 
   private: 
-    Bus bus;
+    Bus<false> bus;
     byte rawData[14];
     byte rawAccelOffset[6];
     byte rawGyroOffset[6];

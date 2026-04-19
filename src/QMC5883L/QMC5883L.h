@@ -35,7 +35,7 @@ class QMC5883L {
   uint16_t temp;
 
   private: 
-    Bus bus;
+    Bus<false> bus;
     byte rawData[6];
     byte drate, scale;
     uint16_t bandwidth;

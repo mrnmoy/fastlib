@@ -48,7 +48,7 @@ class BMP180 {
   void update();
 
   private: 
-    Bus bus;
+    Bus<false> bus;
     const uint8_t oss;
     const float slp;
 
