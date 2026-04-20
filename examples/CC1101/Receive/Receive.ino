@@ -43,30 +43,18 @@ void setup() {
 
   SPI.begin(SCK, MISO, MOSI, SS);
 
+  Serial.print("Looking for radio");
   while (!radio.begin()) {
-    Serial.println(F("Radio not found!"));
+    Serial.print(".");
     delay(2000);
   }
-  Serial.println(F("Radio initialized!"));
-  Serial.println(radio.partnum);
-  Serial.println(radio.version);
+  Serial.printf("\nRadio initialized! [%d, %d]\n", radio.partnum, radio.version);
 }
 
 void loop() {
-  if (radio.read(rxBuff, 1, 2000)) {
-    Serial.print("Recieved: [");
-    for (int i = 0; i < sizeof(rxBuff); i++) {
-      if (i != 0) Serial.print(", ");
-      Serial.print(rxBuff[i]);
-    }
-    Serial.print("] Length: ");
-    Serial.print(sizeof(rxBuff));
-    Serial.print(" RSSI: ");
-    Serial.print(radio.rssi);
-    Serial.print(" LQI: ");
-    Serial.println(radio.lqi);
+  if (!radio.read(rxBuff, 1, 2000)) {
+    Serial.println("Receiving rxBuff timeout");
   } else {
-    Serial.println("Error recieving rxBuff");
+    Serial.printf("Received: [%d], Rssi: %d, Lqi: %d\n", rxBuff[0], radio.rssi, radio.lqi);
   }
-  Serial.println();
 }
