@@ -7,23 +7,23 @@
 #define SS 18
 
 CC1101 radio(CC1101_MOD_2FSK,
-    433.8,
-    4.0,
-    CC1101_POWER_1MW,
-    0,
-    4,
-    CC1101_SYNC_MODE_16_16,
-    0x1234,
-    64,
-    true, 
-    false,
-    true,
-    false,
-    true,
-    false,
-    false,
-    SS,
-    MISO);
+             433.8,
+             4.0,
+             CC1101_POWER_1MW,
+             0,
+             4,
+             CC1101_SYNC_MODE_16_16,
+             0x1234,
+             64,
+             true,
+             false,
+             true,
+             false,
+             true,
+             false,
+             false,
+             SS,
+             MISO);
 
 byte rxBuff[1];
 

@@ -39,12 +39,13 @@ bool CC1101::read(uint8_t *buff, size_t timeoutMs){
 };
 bool CC1101::read(uint8_t *buff, uint8_t len, size_t timeoutMs){
   Serial.println("setting pktlen");
+  // Serial.printf("state before setting pktlen: %d\n", getState());
   setPktLen(len);
   Serial.println("setting idle state");
   setIdleState();
-  Serial.println("flushing rxbuff");
+  Serial.printf("flushing rxbuff: %d\n", bus.readField(CC1101_REG_RXBYTES | CC1101_READ_BURST, 6, 0));
   flushRxBuff();
-  Serial.println("setting rx state");
+  Serial.printf("setting rx state: %d\n", bus.readField(CC1101_REG_RXBYTES |CC1101_READ_BURST, 6, 0));
   setRxState();
   Serial.println("waiting for rxbytes");
   if(!waitForRxBytes(len, timeoutMs)) return false; //timeout
@@ -106,7 +107,7 @@ void CC1101::link2(uint8_t *txBuff, uint8_t *rxBuff, size_t timeoutMs) {
     while (true) { /* state goes to tx even when fifo is empty */
       Serial.print("state: ");
       Serial.println(getState());
-      if (bus.readField(CC1101_REG_RXBYTES, 6, 0) != 0) {
+      if (bus.readField(CC1101_REG_RXBYTES | CC1101_READ_BURST, 6, 0) != 0) {
         Serial.println("rxbytes > 0");
         readRxFifo(rxBuff, pktLen);
         waitForState(STATE_TX);
@@ -283,21 +284,23 @@ void CC1101::setPwr(CC1101_FreqBand freqBand, CC1101_PowerMW pwr, const uint8_t 
   bus.write(CC1101_REG_PATABLE, pwrTable[freqBand][pwr]);
 };
 void CC1101::setRxState() {
-  byte state;
   while (true) {
-    state = getState();
+    byte state = getState();
+    Serial.printf("state: %d\n",state);
     if (state == STATE_RX) break; 
-    else if (state == STATE_RXFIFO_OVERFLOW) flushRxBuff();
-    else if (state != (STATE_CALIB || STATE_SETTLING)) bus.strobe(CC1101_REG_RX);
+    else if (state == STATE_RXFIFO_OVERFLOW) bus.strobe(CC1101_REG_FRX);
+    else if (state != (STATE_CALIB || STATE_SETTLING)) {
+      Serial.println("state is not calib or settling");
+      bus.strobe(CC1101_REG_RX);
+    }
     delayMicroseconds(50);
   }
 };
 void CC1101::setTxState() {
-  byte state;
   while (true) {
-    state = getState();
+    byte state = getState();
     if (state == STATE_TX) break;
-    else if (state == STATE_TXFIFO_UNDERFLOW) flushTxBuff();
+    else if (state == STATE_TXFIFO_UNDERFLOW) bus.strobe(CC1101_REG_FTX);
     else if (state != (STATE_CALIB || STATE_SETTLING)) bus.strobe(CC1101_REG_TX);
     delayMicroseconds(50);
   }
@@ -316,15 +319,24 @@ void CC1101::setTwoWay() {
 };
 
 bool CC1101::enoughRxBytes(uint8_t len) {
-  if (bus.readField(CC1101_REG_RXBYTES, 6, 0) < (len + (isVariablePktLen ? 1 : 0) + (addr > 0 ? 1 : 0))) return false;
-  Serial.printf("rxbytes: %d\n", bus.readField(CC1101_REG_RXBYTES, 6, 0));
+  if (bus.readField(CC1101_REG_RXBYTES | CC1101_READ_BURST, 6, 0) < (len + (isVariablePktLen ? 1 : 0) + (addr > 0 ? 1 : 0))) return false;
+  Serial.printf("rxbytes: %d\n", bus.readField(CC1101_REG_RXBYTES | CC1101_READ_BURST, 6, 0));
   return true;
 };
 bool CC1101::waitForRxBytes(uint8_t len, size_t timeoutMs) {
   if (timeoutMs) {
     uint32_t timer = millis();
     while(!enoughRxBytes(len)) {
-      if((timer + timeoutMs) < millis()) return false;
+      if((timer + timeoutMs) < millis()) {
+        Serial.println("waiting for rxbytes timeout");
+        Serial.printf("state before setting idle: %d\n", getState());
+        setIdleState();
+        Serial.printf("state after setting idle: %d\n", getState());
+        // flushRxBuff();
+        // Serial.printf("state after flushing rxbuff: %d\n", getState());
+        // waitForState();
+        return false;
+      }
       delayMicroseconds(50);
     }
   } else {
@@ -337,7 +349,6 @@ void CC1101::readRxFifo(uint8_t *buff, uint8_t len) {
     len = bus.read(CC1101_REG_FIFO);
   }
   bus.readBurst(CC1101_REG_FIFO | CC1101_READ_BURST, buff, len);
-  // bus.readBurst(0x80 | 0x40 | (CC1101_REG_FIFO & 0b111111), buff, len);
   if(isAppendStatus) {
     uint8_t r = bus.read(CC1101_REG_FIFO);
     if(r >= 128) rssi = ((rssi - 256) / 2) - CC1101_RSSI_OFFSET;
@@ -345,6 +356,7 @@ void CC1101::readRxFifo(uint8_t *buff, uint8_t len) {
     lqi = bus.read(CC1101_REG_FIFO) & 0x7f;
     // if(!(r >> 7) & 1) return false; // CRC Mismatch
   }
+  Serial.printf("still rxbytes left: %d\n", bus.readField(CC1101_REG_RXBYTES | CC1101_READ_BURST, 6, 0));
 };
 void CC1101::writeTxFifo(uint8_t *buff, uint8_t len) {
   if(isVariablePktLen) {
