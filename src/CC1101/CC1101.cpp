@@ -56,9 +56,15 @@ bool CC1101::write(uint8_t *buff){
   return true;
 };
 bool CC1101::write(uint8_t *buff, uint8_t len){
-  // begin();
+  Serial.println("CC1101::write called");
+
+  /* Magic trick */
+  setAutoCalib(isAutoCalib);
+  // setPktLenMode(false);
   setPktLen(len);
+
   setIdleState();
+  setPktLen(len);
   flushTxBuff();
   setTxState();
   writeTxFifo(buff, len);

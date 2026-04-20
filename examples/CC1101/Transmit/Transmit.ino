@@ -58,5 +58,5 @@ void loop() {
     Serial.printf("Sent pkt: [%d, %d, %d, %d]\n", txBuff[0], txBuff[1], txBuff[2], txBuff[3]);
   }
 
-  delay(2000);
+  delay(1000);
 }
