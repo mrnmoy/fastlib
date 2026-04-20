@@ -21,8 +21,8 @@ bool CC1101::begin() {
   setManchester(isManchester);
   setAppendStatus(isAppendStatus);
   setDataWhitening(isDataWhitening);
-  setPktLen(pktLen);
   setPktLenMode(isVariablePktLen);
+  setPktLen(pktLen);
   setSync(syncMode, syncWord, preambleLen);
 
   return true;
@@ -56,6 +56,7 @@ bool CC1101::write(uint8_t *buff){
   return true;
 };
 bool CC1101::write(uint8_t *buff, uint8_t len){
+  // begin();
   setPktLen(len);
   setIdleState();
   flushTxBuff();
@@ -279,9 +280,7 @@ void CC1101::setRxState() {
     byte state = getState();
     if (state == STATE_RX) break; 
     else if (state == STATE_RXFIFO_OVERFLOW) bus.strobe(CC1101_REG_FRX);
-    else if (state != (STATE_CALIB || STATE_SETTLING)) {
-      bus.strobe(CC1101_REG_RX);
-    }
+    else if (state != (STATE_CALIB || STATE_SETTLING)) bus.strobe(CC1101_REG_RX);
     delayMicroseconds(50);
   }
 };
@@ -348,5 +347,11 @@ void CC1101::writeTxFifo(uint8_t *buff, uint8_t len) {
   // if(addr > 0) {
   //   bus.write(CC1101_REG_FIFO, addr);
   // }
-  bus.writeBurst(CC1101_REG_FIFO | CC1101_WRITE_BURST, buff, len);
+  bus.write(CC1101_REG_FIFO, buff[0]);
+  bus.write(CC1101_REG_FIFO, buff[1]);
+  bus.write(CC1101_REG_FIFO, buff[2]);
+  bus.write(CC1101_REG_FIFO, buff[3]);
+  // bus.writeBurst(CC1101_REG_FIFO | CC1101_WRITE_BURST, buff, len);
+  // bus.writeBurst(CC1101_WRITE | CC1101_WRITE_BURST | (CC1101_REG_FIFO & 0b111111), buff, len);
+  Serial.printf("bytes in txfifo: %d\n", bus.readField(CC1101_REG_TXBYTES | CC1101_READ_BURST, 6, 0));
 };

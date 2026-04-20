@@ -6,24 +6,24 @@
 #define MOSI 16
 #define SS 18
 
-CC1101 radio(CC1101_MOD_2FSK,
-             433.8,
-             4.0,
-             CC1101_POWER_1MW,
-             0,
-             4,
-             CC1101_SYNC_MODE_16_16,
-             0x1234,
-             64,
-             true,
-             false,
-             true,
-             false,
-             true,
-             false,
-             false,
-             SS,
-             MISO);
+CC1101 radio(CC1101_MOD_2FSK,         // mod
+             433.8,                   // freq
+             4.0,                     // drate
+             CC1101_POWER_1MW,        // pwr
+             0,                       // addr
+             4,                       // pktlen
+             CC1101_SYNC_MODE_16_16,  // sync mode
+             0x1234,                  // sync word
+             64,                      // preamble length
+             true,                    // crc
+             false,                   // fec
+             true,                    // auto calib
+             false,                   // manchester
+             true,                    // append status
+             false,                   // data whitening
+             false,                   // variable packet length
+             SS,                      // ss/cs pin
+             MISO);                   // miso pin
 
 byte txBuff[4] = { 200, 201, 202, 203 };
 
@@ -43,25 +43,19 @@ void setup() {
 
   SPI.begin(SCK, MISO, MOSI, SS);
 
+  Serial.print("Looking for radio");
   while (!radio.begin()) {
-    Serial.println("Radio not found!");
+    Serial.print(".");
     delay(2000);
   }
-
-  Serial.println("Radio initialized!");
+  Serial.printf("\nRadio initialized! [%d, %d]\n", radio.partnum, radio.version);
 }
 
 void loop() {
-  if (radio.write(txBuff, 4)) {
-    Serial.print("Sent: [");
-    for (int i = 0; i < sizeof(txBuff); i++) {
-      if (i != 0) Serial.print(", ");
-      Serial.print(txBuff[i]);
-    }
-    Serial.print("] Length: ");
-    Serial.println(sizeof(txBuff));
-  } else {
+  if (!radio.write(txBuff, 4)) {
     Serial.println("Error sending packet");
+  } else {
+    Serial.printf("Sent pkt: [%d, %d, %d, %d]\n", txBuff[0], txBuff[1], txBuff[2], txBuff[3]);
   }
 
   delay(2000);
