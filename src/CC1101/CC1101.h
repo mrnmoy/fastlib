@@ -88,8 +88,8 @@ class CC1101 {
   public:
     CC1101(
         CC1101_Modulation mod = CC1101_MOD_2FSK,
-        double freq = 433.8,
-        double drate = 4.0,
+        float freq = 433.8,
+        float drate = 4.0,
         CC1101_PowerMW pwr = CC1101_POWER_1MW,
         uint8_t addr = 0,
         uint8_t pktLen = 4,
@@ -156,20 +156,20 @@ class CC1101 {
       CC1101_FREQ_BAND_915 = 3,
     };
      
-    inline static const double freqTable[][2] = {
+    inline static const float freqTable[][2] = {
       [CC1101_FREQ_BAND_315] = { 300.0, 348.0 },
       [CC1101_FREQ_BAND_433] = { 387.0, 464.0 },
       [CC1101_FREQ_BAND_868] = { 779.0, 891.5 },
       [CC1101_FREQ_BAND_915] = { 896.6, 928.0 },
     };
-    inline static const double drateTable[][2] = {
+    inline static const float drateTable[][2] = {
       [CC1101_MOD_2FSK]    = {  0.6, 500.0 },
       [CC1101_MOD_GFSK]    = {  0.6, 250.0 },
-      [2]           = {  0.0, 0.0   }, 
+      [2]                  = {  0.0, 0.0   }, 
       [CC1101_MOD_ASK_OOK] = {  0.6, 250.0 },
       [CC1101_MOD_4FSK]    = {  0.6, 300.0 },
-      [5]           = {  0.0, 0.0   },
-      [6]           = {  0.0, 0.0   },
+      [5]                  = {  0.0, 0.0   },
+      [6]                  = {  0.0, 0.0   },
       [CC1101_MOD_MSK]     = { 26.0, 500.0 }
     };
     inline static const uint8_t powerTable[][8] = {
@@ -186,7 +186,7 @@ class CC1101 {
     CC1101_SyncMode syncMode;
     CC1101_PowerMW pwr;
     CC1101_FreqBand freqBand;
-    double freq, drate;
+    float freq, drate;
     uint8_t pktLen, preambleLen;
     uint16_t syncWord;
     byte addr;
@@ -207,7 +207,7 @@ class CC1101 {
      
     byte getState();
     bool getChipInfo();
-    bool getFreqBand(double freq, const double freqTable[][2]);
+    bool getFreqBand(float freq, const float freqTable[][2]);
     uint8_t getPreambleIdx(uint8_t len);
 
     void setCRC(bool en);
@@ -219,15 +219,14 @@ class CC1101 {
     void setAppendStatus(bool en);
     void setDataWhitening(bool en);
     void setPktLen(uint8_t len);
-    void setPktLenMode(bool en);
+    void setPktLenMode(bool isVariablePktLen);
     void setMod(CC1101_Modulation mod);
-    void setFreq(double freq);
-    void setDrate(double drate);
+    void setFreq(float freq);
+    void setDrate(float drate);
     void setPwr(CC1101_FreqBand freqBand, CC1101_PowerMW pwr, const uint8_t pwrTable[][8]);
-    void setState(State state);
+    void setIdleState();
     void setRxState();
     void setTxState();
-    void setIdleState();
     void setTwoWay();
 
     bool enoughRxBytes(uint8_t len);

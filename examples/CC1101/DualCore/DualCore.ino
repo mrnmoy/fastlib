@@ -65,7 +65,7 @@ void txTask(void *pvParameters) {
                64,                      // preamble length
                false,                   // crc
                false,                   // fec
-               false,                   // auto calib
+               true,                    // auto calib
                false,                   // manchester
                true,                    // append status
                false,                   // data whitening
@@ -121,7 +121,7 @@ void rxTask(void *pvParameters) {
                64,                      // preamble length
                false,                   // crc
                false,                   // fec
-               false,                   // auto calib
+               true,                    // auto calib
                false,                   // manchester
                true,                    // append status
                false,                   // data whitening
@@ -153,7 +153,7 @@ void rxTask(void *pvParameters) {
     if (radio.read(buff, 4, 2000)) {
       Serial.printf("Received: [%d, %d, %d, %d], Rssi: %d, Lqi: %d", buff[0], buff[1], buff[2], buff[3], radio.rssi, radio.lqi);
     } else {
-      Serial.print("Receiving rx packet timeout");
+      Serial.print("Error receiving rx pkt");
     }
     Serial.println();
   }
