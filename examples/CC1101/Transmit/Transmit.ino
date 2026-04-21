@@ -9,18 +9,18 @@
 CC1101 radio(CC1101_MOD_2FSK,         // mod
              433.8,                   // freq
              4.0,                     // drate
-             CC1101_POWER_1MW,        // pwr
+             CC1101_POWER_3MW,        // pwr
              0,                       // addr
              4,                       // pktlen
              CC1101_SYNC_MODE_16_16,  // sync mode
              0x1234,                  // sync word
              64,                      // preamble length
-             true,                    // crc
+             false,                   // crc
              false,                   // fec
              true,                    // auto calib
              false,                   // manchester
              true,                    // append status
-             false,                   // data whitening
+             true,                    // data whitening
              false,                   // variable packet length
              SS,                      // ss/cs pin
              MISO);                   // miso pin
@@ -55,8 +55,9 @@ void loop() {
   if (!radio.write(txBuff, 4)) {
     Serial.println("Error sending packet");
   } else {
-    Serial.printf("Sent pkt: [%d, %d, %d, %d]\n", txBuff[0], txBuff[1], txBuff[2], txBuff[3]);
+    Serial.printf("Sending pkt: [%d, %d, %d, %d]", txBuff[0], txBuff[1], txBuff[2], txBuff[3]);
   }
 
+  Serial.println();
   delay(1000);
 }
