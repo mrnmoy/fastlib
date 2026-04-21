@@ -197,7 +197,7 @@ class CC1101 {
          isAppendStatus,
          isDataWhitening,
          isVariablePktLen;
-    int8_t pwrIdx = -1, preambleIdx = -1;
+    int8_t preambleIdx = -1;
 
     void reset();
     void flushRxBuff();
@@ -224,6 +224,7 @@ class CC1101 {
     void setFreq(double freq);
     void setDrate(double drate);
     void setPwr(CC1101_FreqBand freqBand, CC1101_PowerMW pwr, const uint8_t pwrTable[][8]);
+    void setState(State state);
     void setRxState();
     void setTxState();
     void setIdleState();

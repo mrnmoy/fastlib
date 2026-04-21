@@ -38,8 +38,8 @@ bool CC1101::read(uint8_t *buff, size_t timeoutMs){
   return true;
 };
 bool CC1101::read(uint8_t *buff, uint8_t len, size_t timeoutMs){
-  setPktLen(len);
   setIdleState();
+  setPktLen(len);
   flushRxBuff();
   setRxState();
   if(!waitForRxBytes(len, timeoutMs)) return false; //timeout
@@ -56,11 +56,6 @@ bool CC1101::write(uint8_t *buff){
   return true;
 };
 bool CC1101::write(uint8_t *buff, uint8_t len){
-  /* Magic trick */
-  setAutoCalib(isAutoCalib);
-  // setPktLenMode(false);
-  setPktLen(len);
-
   setIdleState();
   setPktLen(len);
   flushTxBuff();
@@ -70,7 +65,7 @@ bool CC1101::write(uint8_t *buff, uint8_t len){
   return true;
 };
 bool CC1101::link(uint8_t *txBuff, uint8_t *rxBuff, size_t timeoutMs) {
-  uint32_t lastMillis = millis();
+  uint32_t timer = millis();
   setIdleState();
   flushTxBuff();
   setTxState();
@@ -79,7 +74,7 @@ bool CC1101::link(uint8_t *txBuff, uint8_t *rxBuff, size_t timeoutMs) {
   flushRxBuff();
   setRxState();
   while (!enoughRxBytes(pktLen)) {
-    if (millis() - lastMillis > timeoutMs) {
+    if (timer + timeoutMs < millis()) {
       return false; // timeout
     }
     delay(1); // avoid watchdog
@@ -89,7 +84,7 @@ bool CC1101::link(uint8_t *txBuff, uint8_t *rxBuff, size_t timeoutMs) {
   return true;
 };
 void CC1101::link2(uint8_t *txBuff, uint8_t *rxBuff, size_t timeoutMs) {
-  uint32_t lastMillis;
+  uint32_t timer;
   setIdleState();
   setTwoWay();
   setTxState();
@@ -99,7 +94,7 @@ void CC1101::link2(uint8_t *txBuff, uint8_t *rxBuff, size_t timeoutMs) {
     waitForState(STATE_RX);
     Serial.println("Sent packet.");
     flushRxBuff();
-    lastMillis = millis();
+    timer = millis();
     while (true) { /* state goes to tx even when fifo is empty */
       Serial.print("state: ");
       Serial.println(getState());
@@ -109,7 +104,7 @@ void CC1101::link2(uint8_t *txBuff, uint8_t *rxBuff, size_t timeoutMs) {
         waitForState(STATE_TX);
         Serial.println("Received packet.");
         break;
-      // } else if (millis() - lastMillis > timeoutMs) {
+      // } else if (timer + timeoutMs < millis()) {
       //   setIdleState();
       //   setTxState();
       //   Serial.println("timeout");
@@ -134,12 +129,12 @@ void CC1101::reset() {
 void CC1101::flushRxBuff(){
   if(getState() != (STATE_IDLE || STATE_RXFIFO_OVERFLOW)) return;
   bus.strobe(CC1101_REG_FRX);
-  delayMicroseconds(50);
+  // delayMicroseconds(50);
 };
 void CC1101::flushTxBuff(){
   if(getState() != (STATE_IDLE || STATE_TXFIFO_UNDERFLOW)) return;
   bus.strobe(CC1101_REG_FTX);
-  delayMicroseconds(50);
+  // delayMicroseconds(50);
 };
 byte CC1101::readStatus(byte addr){
   return bus.read(addr | CC1101_READ_BURST);
@@ -200,11 +195,10 @@ uint8_t CC1101::getPreambleIdx(uint8_t len) {
 
 void CC1101::setCRC(bool en) {
   bus.writeField(CC1101_REG_PKTCTRL0, (byte)en, 2, 2); /* CRC_EN */
-  bus.writeField(CC1101_REG_PKTCTRL1, (byte)en, 3, 3); /* Autoflush */
+  // bus.writeField(CC1101_REG_PKTCTRL1, (byte)en, 3, 3); /* Autoflush */
 };
 void CC1101::setFEC(bool en) {
   if(isVariablePktLen) return;
-
   bus.writeField(CC1101_REG_MDMCFG1, (byte)en, 7, 7);
 };
 void CC1101::setAddr(byte addr) {
@@ -223,8 +217,8 @@ void CC1101::setAutoCalib(bool en) {
   bus.writeField(CC1101_REG_MCSM0, (byte)en, 5, 4);
 };
 void CC1101::setManchester(bool en) {
-  if(mod == CC1101_MOD_MSK || mod == CC1101_MOD_4FSK) return;
-  bus.writeField(CC1101_REG_MDMCFG2, (byte)en, 3, 3);
+  if(mod != CC1101_MOD_MSK || mod != CC1101_MOD_4FSK)
+    bus.writeField(CC1101_REG_MDMCFG2, (byte)en, 3, 3);
 };
 void CC1101::setAppendStatus(bool en) {
   bus.writeField(CC1101_REG_PKTCTRL1, (byte)en, 2, 2);
@@ -236,7 +230,7 @@ void CC1101::setPktLen(uint8_t len) {
   bus.write(CC1101_REG_PKTLEN, pktLen);
 };
 void CC1101::setPktLenMode(bool en) {
-  bus.writeField(CC1101_REG_PKTCTRL0, (byte)en, 1, 0); /* todo: 2 */
+  bus.writeField(CC1101_REG_PKTCTRL0, (byte)en, 1, 0); /* TODO: infinite */
 };
 void CC1101::setMod(CC1101_Modulation mod){
   bus.writeField(CC1101_REG_MDMCFG2, (uint8_t)mod, 6, 4);
@@ -248,6 +242,9 @@ void CC1101::setFreq(double freq){
   bus.write(CC1101_REG_FREQ1, (f >> 8) & 0xff);
   bus.write(CC1101_REG_FREQ2, (f >> 16) & 0xff);
 
+  // TODO Deviation
+  // bus.writeField(CC1101_REG_DEVIATN, devE, 6, 4);
+  // bus.writeField(CC1101_REG_DEVIATN, devM, 2, 0);
 };
 void CC1101::setDrate(double drate){
   uint32_t xosc = CC1101_CRYSTAL_FREQ * 1000;
@@ -260,25 +257,45 @@ void CC1101::setDrate(double drate){
   }
 
   bus.writeField(CC1101_REG_MDMCFG4, e, 3, 0);
-  bus.writeField(CC1101_REG_MDMCFG3, (uint8_t)m, 7, 0);
-  // bus.write(CC1101_REG_MDMCFG3, (uint8_t)m);
+  // bus.writeField(CC1101_REG_MDMCFG3, (uint8_t)m, 7, 0);
+  bus.write(CC1101_REG_MDMCFG3, (uint8_t)m);
 };
 void CC1101::setPwr(CC1101_FreqBand freqBand, CC1101_PowerMW pwr, const uint8_t pwrTable[][8]){
-  // if(mod == MOD_ASK_OOK) {
-  //   uint8_t paTable[2] = {WRITE, pwrTable[freqBand][pwr]};
-  //   bus.writeBurst(CC1101_REG_PATABLE, paTable, 2);
-  //   bus.writeField(CC1101_REG_FREND0, 1, 2, 0);
-  // } else {
-  //   bus.write(CC1101_REG_PATABLE, pwrTable[freqBand][pwr]);
-  //   bus.writeField(CC1101_REG_FREND0, 0, 2, 0);
-  // }
   if(mod == CC1101_MOD_ASK_OOK) {
+    uint8_t paTable[2] = {CC1101_WRITE, pwrTable[freqBand][pwr]};
+    bus.writeBurst(CC1101_REG_PATABLE, paTable, 2);
     bus.writeField(CC1101_REG_FREND0, 1, 2, 0);
   } else {
+    bus.write(CC1101_REG_PATABLE, pwrTable[freqBand][pwr]);
     bus.writeField(CC1101_REG_FREND0, 0, 2, 0);
   }
-  bus.write(CC1101_REG_PATABLE, pwrTable[freqBand][pwr]);
+  // if(mod == CC1101_MOD_ASK_OOK) {
+  //   bus.writeField(CC1101_REG_FREND0, 1, 2, 0);
+  // } else {
+  //   bus.writeField(CC1101_REG_FREND0, 0, 2, 0);
+  // }
+  // bus.write(CC1101_REG_PATABLE, pwrTable[freqBand][pwr]);
 };
+void CC1101::setState(State state) {
+  State currentState = getState();
+  switch (state) {
+    case currentState: return;
+    case STATE_IDLE:
+      bus.strobe(CC1101_REG_IDLE);
+      break;
+    case STATE_RX:
+      if (state == STATE_RXFIFO_OVERFLOW) bus.strobe(CC1101_REG_FRX);
+      else if (state != (STATE_CALIB || STATE_SETTLING)) bus.strobe(CC1101_REG_RX);
+      break;
+    case STATE_TX:
+      if (state == STATE_TXFIFO_UNDERFLOW) bus.strobe(CC1101_REG_FTX);
+      else if (state != (STATE_CALIB || STATE_SETTLING)) bus.strobe(CC1101_REG_TX);
+      break;
+  }
+  while (getState() != state) {
+    delayMicroseconds(50);
+  }
+}
 void CC1101::setRxState() {
   // while (true) {
   //   byte state = getState();
