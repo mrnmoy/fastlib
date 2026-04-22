@@ -70,7 +70,7 @@ enum CC1101_PowerMW {
   CC1101_POWER_1MW   = 4,  /* 1mw / 0dbm */
   CC1101_POWER_3MW   = 5,  /* 3.16mw / 5dbm */
   CC1101_POWER_5MW   = 6,  /* 5.01mw / 7dbm */
-  CC1101_POWER_10MW  = 7, /* 10mw / 10dbm */
+  CC1101_POWER_10MW  = 7,  /* 10mw / 10dbm */
 };
 
 enum CC1101_SyncMode {
@@ -233,20 +233,6 @@ class CC1101 {
     bool waitForRxBytes(uint8_t len, size_t timeoutMs);
     bool readRxFifo(uint8_t *buff, uint8_t len);
     void writeTxFifo(uint8_t *buff, uint8_t len);
-
-    // uint8_t read(byte addr) {
-    //   if (addr >= CC1101_REG_PARTNUM && addr <= CC1101_REG_RCCTRL0_STATUS) {
-    //     addr |= CC1101_WRITE_BURST;
-    //   } else {
-    //     addr |= CC1101_READ;
-    //   }
-    // }
-    // void write(byte addr, byte val) {
-    //   addr |= CC1101_WRITE;
-    // }
-    // void writeBurst(byte addr, byte *buff, uint8_t len) {
-    //   addr |= CC1101_WRITE_BURST;
-    // }
 };
 
 #endif

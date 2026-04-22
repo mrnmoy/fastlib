@@ -51,12 +51,12 @@ void txTask(void *pvParameters) {
   Serial.println(xPortGetCoreID());
 
   SPIClass fspi(FSPI);
-  CC1101 radio(CC1101_MOD_2FSK,         // mod
+  CC1101 radio(CC1101_MOD_GFSK,         // mod
                433.8,                   // freq
                10,                      // drate
                CC1101_POWER_3MW,        // pwr
                0,                       // addr
-               4,                       // pktlen
+               64,                      // pktlen
                CC1101_SYNC_MODE_16_16,  // sync mode
                0x1234,                  // sync word
                64,                      // preamble length
@@ -66,7 +66,7 @@ void txTask(void *pvParameters) {
                false,                   // manchester
                true,                    // append status
                false,                   // data whitening
-               false,                   // variable packet length
+               true,                    // variable packet length
                TX_SS,                   // ss/cs pin
                FSPI_MISO,               // miso pin
                fspi);                   // spi class
@@ -91,7 +91,7 @@ void txTask(void *pvParameters) {
   byte buff[4] = { 200, 201, 202, 203 };
 
   while (true) {
-    if (radio.write(buff, 4)) {
+    if (radio.write(buff)) {
       Serial.printf("Sending pkt: [%d, %d, %d, %d]", buff[0], buff[1], buff[2], buff[3]);
     } else {
       Serial.print("Error sending tx packet");
@@ -107,12 +107,12 @@ void rxTask(void *pvParameters) {
   Serial.println(xPortGetCoreID());
 
   SPIClass hspi(HSPI);
-  CC1101 radio(CC1101_MOD_2FSK,         // mod
+  CC1101 radio(CC1101_MOD_GFSK,         // mod
                433.8,                   // freq
                10,                      // drate
                CC1101_POWER_3MW,        // pwr
                0,                       // addr
-               4,                       // pktlen
+               64,                      // pktlen
                CC1101_SYNC_MODE_16_16,  // sync mode
                0x1234,                  // sync word
                64,                      // preamble length
@@ -122,7 +122,7 @@ void rxTask(void *pvParameters) {
                false,                   // manchester
                true,                    // append status
                false,                   // data whitening
-               false,                   // variable packet length
+               true,                    // variable packet length
                RX_SS,                   // ss/cs pin
                HSPI_MISO,               // miso pin
                hspi);                   // spi class
@@ -147,7 +147,7 @@ void rxTask(void *pvParameters) {
   byte buff[4];
 
   while (true) {
-    if (radio.read(buff, 4, 2000)) {
+    if (radio.read(buff)) {
       Serial.printf("Received: [%d, %d, %d, %d], Rssi: %d, Lqi: %d", buff[0], buff[1], buff[2], buff[3], radio.rssi, radio.lqi);
     } else {
       Serial.print("Error receiving rx pkt");

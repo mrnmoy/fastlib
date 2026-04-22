@@ -9,6 +9,11 @@ bool CC1101::begin() {
       !(drate > drateTable[mod][0] && drate < drateTable[mod][1])) 
     return false;
 
+  setMod(mod);
+  setFreq(freq);
+  setDrate(drate);
+  setPwr(freqBand, pwr, powerTable);
+
   setAddr(addr);
   setCRC(isCRC);
   setFEC(isFEC);
@@ -19,11 +24,6 @@ bool CC1101::begin() {
   setSync(syncMode, syncWord, preambleLen);
   setPktLenMode(isVariablePktLen);
   setPktLen(pktLen);
-
-  setMod(mod);
-  setFreq(freq);
-  setDrate(drate);
-  setPwr(freqBand, pwr, powerTable);
 
   return true;
 }
@@ -59,8 +59,8 @@ bool CC1101::write(uint8_t *buff){
 };
 bool CC1101::write(uint8_t *buff, uint8_t len){
   setIdleState();
-  // setPktLenMode(false);
-  // setPktLen(len);
+  setPktLenMode(false);
+  setPktLen(len);
   flushTxBuff();
   setTxState();
   writeTxFifo(buff, len);
@@ -262,20 +262,20 @@ void CC1101::setDrate(float drate){
   // bus.write(CC1101_REG_MDMCFG3 | CC1101_WRITE, (byte)m);
 };
 void CC1101::setPwr(CC1101_FreqBand freqBand, CC1101_PowerMW pwr, const uint8_t pwrTable[][8]){
-  if(mod == CC1101_MOD_ASK_OOK) {
-    uint8_t paTable[2] = {CC1101_WRITE, pwrTable[freqBand][pwr]};
-    bus.writeBurst(CC1101_REG_PATABLE | CC1101_WRITE_BURST, paTable, 2);
-    bus.writeField(CC1101_REG_FREND0, CC1101_READ, CC1101_WRITE, 2, 0, 1);
-  } else {
-    bus.write(CC1101_REG_PATABLE | CC1101_WRITE, pwrTable[freqBand][pwr]);
-    bus.writeField(CC1101_REG_FREND0, CC1101_READ, CC1101_WRITE, 2, 0, 0);
-  }
   // if(mod == CC1101_MOD_ASK_OOK) {
+  //   uint8_t paTable[2] = {CC1101_WRITE, pwrTable[freqBand][pwr]};
+  //   bus.writeBurst(CC1101_REG_PATABLE | CC1101_WRITE_BURST, paTable, 2);
   //   bus.writeField(CC1101_REG_FREND0, CC1101_READ, CC1101_WRITE, 2, 0, 1);
   // } else {
+  //   bus.write(CC1101_REG_PATABLE | CC1101_WRITE, pwrTable[freqBand][pwr]);
   //   bus.writeField(CC1101_REG_FREND0, CC1101_READ, CC1101_WRITE, 2, 0, 0);
   // }
-  // bus.write(CC1101_REG_PATABLE | CC1101_WRITE, pwrTable[freqBand][pwr]);
+  if(mod == CC1101_MOD_ASK_OOK) {
+    bus.writeField(CC1101_REG_FREND0, CC1101_READ, CC1101_WRITE, 2, 0, 1);
+  } else {
+    bus.writeField(CC1101_REG_FREND0, CC1101_READ, CC1101_WRITE, 2, 0, 0);
+  }
+  bus.write(CC1101_REG_PATABLE | CC1101_WRITE, pwrTable[freqBand][pwr]);
 };
 void CC1101::setIdleState() {
   if (getState() == STATE_IDLE) return;
