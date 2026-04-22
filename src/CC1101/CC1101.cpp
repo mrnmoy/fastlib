@@ -9,11 +9,6 @@ bool CC1101::begin() {
       !(drate > drateTable[mod][0] && drate < drateTable[mod][1])) 
     return false;
 
-  // setMod(mod);
-  setFreq(freq);
-  // setPwr(freqBand, pwr, powerTable);
-  // setDrate(drate);
-
   // setAddr(addr);
   // setCRC(isCRC);
   // setFEC(isFEC);
@@ -22,8 +17,13 @@ bool CC1101::begin() {
   // setAppendStatus(isAppendStatus);
   // setDataWhitening(isDataWhitening);
   // setSync(syncMode, syncWord, preambleLen);
-  setPktLenMode(isVariablePktLen);
-  setPktLen(pktLen);
+  // setPktLenMode(isVariablePktLen);
+  // setPktLen(pktLen);
+
+  // setMod(mod);
+  setFreq(freq);
+  // setDrate(drate);
+  // setPwr(freqBand, pwr, powerTable);
 
   return true;
 }
@@ -62,7 +62,8 @@ bool CC1101::write(uint8_t *buff, uint8_t len){
   // setPktLen(len);
 
   setIdleState();
-  setPktLen(len);
+  // setPktLenMode(false);
+  // setPktLen(len);
   flushTxBuff();
   setTxState();
   writeTxFifo(buff, len);
@@ -199,26 +200,18 @@ uint8_t CC1101::getPreambleIdx(uint8_t len) {
 };
 
 void CC1101::setCRC(bool en) {
-  Serial.printf("set crc: %d", (byte)en);
-  Serial.println();
   bus.writeField(CC1101_REG_PKTCTRL0, (byte)en, 2, 2); /* CRC_EN */
   // bus.writeField(CC1101_REG_PKTCTRL1, (byte)en, 3, 3); /* Autoflush */
 };
 void CC1101::setFEC(bool en) {
-  Serial.printf("set fec: %d", (byte)en);
-  Serial.println();
   if(isVariablePktLen) return;
   bus.writeField(CC1101_REG_MDMCFG1, (byte)en, 7, 7);
 };
 void CC1101::setAddr(byte addr) {
-  Serial.printf("set addr: %d", addr);
-  Serial.println();
   bus.writeField(CC1101_REG_PKTCTRL1, addr > 0 ? 1 : 0, 1, 0);
   bus.write(CC1101_REG_ADDR, addr);
 };
 void CC1101::setSync(CC1101_SyncMode syncMode, uint16_t syncWord, uint8_t preambleLen) {
-  Serial.printf("set sync: %d, sync1: %d, sync0: %d, preambleIdx: %d", syncMode, syncWord >> 8, syncWord & 0xff, getPreambleIdx(preambleLen));
-  Serial.println();
   bus.writeField(CC1101_REG_MDMCFG2, syncMode, 2, 0);
 
   bus.write(CC1101_REG_SYNC1, syncWord >> 8);
@@ -227,50 +220,30 @@ void CC1101::setSync(CC1101_SyncMode syncMode, uint16_t syncWord, uint8_t preamb
   bus.writeField(CC1101_REG_MDMCFG1, getPreambleIdx(preambleLen), 6, 4);
 };
 void CC1101::setAutoCalib(bool en) {
-  Serial.printf("set auto calib: %d", (byte)en);
-  Serial.println();
   bus.writeField(CC1101_REG_MCSM0, (byte)en, 5, 4);
 };
 void CC1101::setManchester(bool en) {
-  Serial.printf("set manchester: %d", (byte)en);
-  Serial.println();
   if(mod != CC1101_MOD_MSK || mod != CC1101_MOD_4FSK)
     bus.writeField(CC1101_REG_MDMCFG2, (byte)en, 3, 3);
 };
 void CC1101::setAppendStatus(bool en) {
-  Serial.printf("set append status: %d", (byte)en);
-  Serial.println();
   bus.writeField(CC1101_REG_PKTCTRL1, (byte)en, 2, 2);
 };
 void CC1101::setDataWhitening(bool en) {
-  Serial.printf("set data whitening: %d", (byte)en);
-  Serial.println();
   bus.writeField(CC1101_REG_PKTCTRL0, (byte)en, 6, 6);
 };
 void CC1101::setPktLen(uint8_t len) {
-  Serial.printf("set pktlen: %d", len);
-  Serial.println();
   bus.write(CC1101_REG_PKTLEN, len);
 };
 void CC1101::setPktLenMode(bool isVariablePktLen) {
-  Serial.printf("set pktlen mode: %d", (byte)isVariablePktLen);
-  Serial.println();
   bus.writeField(CC1101_REG_PKTCTRL0, (byte)isVariablePktLen, 1, 0); /* TODO: infinite */
 };
 void CC1101::setMod(CC1101_Modulation mod){
-  Serial.printf("set mod: %d", (byte)mod);
-  Serial.println();
   bus.writeField(CC1101_REG_MDMCFG2, (byte)mod, 6, 4);
 };
 void CC1101::setFreq(float freq){
   uint32_t f = ((freq * 65536.0) / CC1101_CRYSTAL_FREQ); 
 
-  Serial.print("set freq: ");
-  Serial.print(freq);
-  Serial.print(", f: ");
-  Serial.print(f);
-  Serial.printf(", freq0: %d, freq1: %d, freq2: %d", f & 0xff, (f>>8) & 0xff, (f>>16)&0xff);
-  Serial.println();
   bus.write(CC1101_REG_FREQ0, f & 0xff);
   bus.write(CC1101_REG_FREQ1, (f >> 8) & 0xff);
   bus.write(CC1101_REG_FREQ2, (f >> 16) & 0xff);
@@ -289,15 +262,11 @@ void CC1101::setDrate(float drate){
     e++;
   }
 
-  Serial.printf("set drate, e: %d, m: %d", e, (byte)m);
-  Serial.println();
   bus.writeField(CC1101_REG_MDMCFG4, e, 3, 0);
   bus.writeField(CC1101_REG_MDMCFG3, (byte)m, 7, 0);
   // bus.write(CC1101_REG_MDMCFG3, (byte)m);
 };
 void CC1101::setPwr(CC1101_FreqBand freqBand, CC1101_PowerMW pwr, const uint8_t pwrTable[][8]){
-  Serial.printf("set pwr: %d", pwrTable[freqBand][pwr]);
-  Serial.println();
   if(mod == CC1101_MOD_ASK_OOK) {
     uint8_t paTable[2] = {CC1101_WRITE, pwrTable[freqBand][pwr]};
     bus.writeBurst(CC1101_REG_PATABLE, paTable, 2);
@@ -365,29 +334,47 @@ bool CC1101::waitForRxBytes(uint8_t len, size_t timeoutMs) {
   }
   return true;
 };
-bool CC1101::readRxFifo(uint8_t *buff, uint8_t len) {
+bool CC1101::readRxFifo(uint8_t *buff) {
+  uint8_t len = pktLen;
   if(isVariablePktLen) {
     len = bus.read(CC1101_REG_FIFO);
   }
   bus.readBurst(CC1101_REG_FIFO | CC1101_READ_BURST, buff, len);
+  if (!readAppendingStatus()) return false; // CRC Mismatch
+  return true;
+};
+bool CC1101::readRxFifo(uint8_t *buff, uint8_t len) {
+  bus.readBurst(CC1101_REG_FIFO | CC1101_READ_BURST, buff, len);
+  if (!readAppendingStatus()) return false; // CRC Mismatch
+  return true;
+};
+void CC1101::writeTxFifo(uint8_t *buff) {
+  uint8_t len = pktLen;
+  if(isVariablePktLen) {
+    len = sizeof(buff);
+    bus.write(CC1101_REG_FIFO, len);
+  }  
+  if(addr > 0) {
+    bus.write(CC1101_REG_FIFO, addr);
+  }
+  bus.writeBurst(CC1101_REG_FIFO | CC1101_WRITE_BURST, buff, len);
+};
+void CC1101::writeTxFifo(uint8_t *buff, uint8_t len) {
+  if(addr > 0) {
+    bus.write(CC1101_REG_FIFO, addr);
+  }
+  bus.writeBurst(CC1101_REG_FIFO | CC1101_WRITE_BURST, buff, len);
+};
+bool CC1101::readAppendingStatus() {
   if(isAppendStatus) {
     uint8_t r = bus.read(CC1101_REG_FIFO);
     if(r >= 128) rssi = ((rssi - 256) / 2) - CC1101_RSSI_OFFSET;
     else rssi = (rssi / 2) - CC1101_RSSI_OFFSET;
     lqi = bus.read(CC1101_REG_FIFO) & 0x7f;
-    Serial.println("CRC Mismatch");
-    if(!(r >> 7) & 1) return false; // CRC Mismatch
+    if(!(r >> 7) & 1) { 
+      Serial.println("CRC Mismatch");
+      return false; // CRC Mismatch
+    } 
   }
   return true;
-};
-void CC1101::writeTxFifo(uint8_t *buff, uint8_t len) {
-  if(isVariablePktLen) {
-    len = sizeof(buff);
-    bus.write(CC1101_REG_FIFO, len);
-  }
-  // if(addr > 0) {
-  //   bus.write(CC1101_REG_FIFO, addr);
-  // }
-  bus.writeBurst(CC1101_REG_FIFO | CC1101_WRITE_BURST, buff, len);
-  // bus.writeBurst(CC1101_WRITE | CC1101_WRITE_BURST | (CC1101_REG_FIFO & 0b111111), buff, len);
 };

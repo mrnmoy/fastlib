@@ -15,9 +15,6 @@
 #define HSPI_SCK 16
 #define RX_SS 7
 
-TaskHandle_t txTaskHandle;
-TaskHandle_t rxTaskHandle;
-
 void setup() {
   Serial.begin(115200);
 
@@ -31,7 +28,7 @@ void setup() {
     10000,
     NULL,
     1,
-    &txTaskHandle,
+    NULL,
     0);
 
   delay(500);
@@ -42,7 +39,7 @@ void setup() {
     10000,
     NULL,
     20,
-    &rxTaskHandle,
+    NULL,
     1);
 
   delay(500);

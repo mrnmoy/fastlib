@@ -231,8 +231,11 @@ class CC1101 {
 
     bool enoughRxBytes(uint8_t len);
     bool waitForRxBytes(uint8_t len, size_t timeoutMs);
+    bool readRxFifo(uint8_t *buff);
     bool readRxFifo(uint8_t *buff, uint8_t len);
+    void writeTxFifo(uint8_t *buff);
     void writeTxFifo(uint8_t *buff, uint8_t len);
+    bool readAppendingStatus();
 };
 
 #endif
