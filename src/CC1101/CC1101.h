@@ -233,6 +233,20 @@ class CC1101 {
     bool waitForRxBytes(uint8_t len, size_t timeoutMs);
     bool readRxFifo(uint8_t *buff, uint8_t len);
     void writeTxFifo(uint8_t *buff, uint8_t len);
+
+    // uint8_t read(byte addr) {
+    //   if (addr >= CC1101_REG_PARTNUM && addr <= CC1101_REG_RCCTRL0_STATUS) {
+    //     addr |= CC1101_WRITE_BURST;
+    //   } else {
+    //     addr |= CC1101_READ;
+    //   }
+    // }
+    // void write(byte addr, byte val) {
+    //   addr |= CC1101_WRITE;
+    // }
+    // void writeBurst(byte addr, byte *buff, uint8_t len) {
+    //   addr |= CC1101_WRITE_BURST;
+    // }
 };
 
 #endif

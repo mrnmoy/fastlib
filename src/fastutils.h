@@ -73,9 +73,13 @@ class Bus<false> {
       wire.write(val);
       wire.endTransmission();
     }
-    void writeField(byte addr, byte val, byte hi, byte lo) {
+    void writeField(byte addr, byte hi, byte lo, byte val) {
       uint8_t mask = ((1 << (hi - lo + 1)) -1) << lo;
       write(addr, (read(addr) & ~mask) | ((val <<= lo) & mask));
+    }
+    void writeField(byte addr, byte readMask, byte writeMask, byte hi, byte lo, byte val) {
+      uint8_t mask = ((1 << (hi - lo + 1)) -1) << lo;
+      write(addr | writeMask, (read(addr | readMask) & ~mask) | ((val <<= lo) & mask));
     }
     void writeBurst(byte addr, byte *buff, uint8_t len) {
       wire.beginTransmission(i2cAddr);
@@ -146,9 +150,13 @@ class Bus<true> {
       spi.transfer(val);
       spiStop();
     }
-    void writeField(byte addr, byte val, byte hi, byte lo) {
+    void writeField(byte addr, byte hi, byte lo, byte val) {
       uint8_t mask = ((1 << (hi - lo + 1)) -1) << lo;
       write(addr, (read(addr) & ~mask) | ((val <<= lo) & mask));
+    }
+    void writeField(byte addr, byte readMask, byte writeMask, byte hi, byte lo, byte val) {
+      uint8_t mask = ((1 << (hi - lo + 1)) -1) << lo;
+      write(addr | writeMask, (read(addr | readMask) & ~mask) | ((val <<= lo) & mask));
     }
     void writeBurst(byte addr, byte *buff, uint8_t len) {
       spiStart();
@@ -163,7 +171,9 @@ class Bus<true> {
     void spiStart() {
       spi.beginTransaction(spiSettings);
       digitalWrite(ss, LOW);
-      #if !defined(CONFIG_IDF_TARGET_ESP32S3) || !defined(CONFIG_IDF_TARGET_ESP32C3)
+      #if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C3)
+        return;
+      #else
         while (digitalRead(miso));
       #endif
     }

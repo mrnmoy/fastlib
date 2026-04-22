@@ -9,21 +9,21 @@ bool CC1101::begin() {
       !(drate > drateTable[mod][0] && drate < drateTable[mod][1])) 
     return false;
 
-  // setAddr(addr);
-  // setCRC(isCRC);
-  // setFEC(isFEC);
-  // setAutoCalib(isAutoCalib);
-  // setManchester(isManchester);
-  // setAppendStatus(isAppendStatus);
-  // setDataWhitening(isDataWhitening);
-  // setSync(syncMode, syncWord, preambleLen);
-  // setPktLenMode(isVariablePktLen);
-  // setPktLen(pktLen);
+  setAddr(addr);
+  setCRC(isCRC);
+  setFEC(isFEC);
+  setAutoCalib(isAutoCalib);
+  setManchester(isManchester);
+  setAppendStatus(isAppendStatus);
+  setDataWhitening(isDataWhitening);
+  setSync(syncMode, syncWord, preambleLen);
+  setPktLenMode(isVariablePktLen);
+  setPktLen(pktLen);
 
-  // setMod(mod);
+  setMod(mod);
   setFreq(freq);
-  // setDrate(drate);
-  // setPwr(freqBand, pwr, powerTable);
+  setDrate(drate);
+  setPwr(freqBand, pwr, powerTable);
 
   return true;
 }
@@ -58,11 +58,6 @@ bool CC1101::write(uint8_t *buff){
   return true;
 };
 bool CC1101::write(uint8_t *buff, uint8_t len){
-  /* Magic trick */
-  // setAutoCalib(isAutoCalib);
-  // setPktLenMode(false);
-  // setPktLen(len);
-
   setIdleState();
   // setPktLenMode(false);
   // setPktLen(len);
@@ -132,17 +127,15 @@ void CC1101::reset() {
   digitalWrite(ss, HIGH);
   delayMicroseconds(40);
 
-  bus.strobe(CC1101_REG_RES);
+  bus.strobe(CC1101_REG_RES | CC1101_WRITE_BURST);
 }
 void CC1101::flushRxBuff(){
   if(getState() != (STATE_IDLE || STATE_RXFIFO_OVERFLOW)) return;
-  bus.strobe(CC1101_REG_FRX);
-  // delayMicroseconds(50);
+  bus.strobe(CC1101_REG_FRX | CC1101_WRITE_BURST);
 };
 void CC1101::flushTxBuff(){
   if(getState() != (STATE_IDLE || STATE_TXFIFO_UNDERFLOW)) return;
   bus.strobe(CC1101_REG_FTX);
-  // delayMicroseconds(50);
 };
 byte CC1101::readStatus(byte addr){
   return bus.read(addr | CC1101_READ_BURST);
@@ -202,57 +195,57 @@ uint8_t CC1101::getPreambleIdx(uint8_t len) {
 };
 
 void CC1101::setCRC(bool en) {
-  bus.writeField(CC1101_REG_PKTCTRL0, (byte)en, 2, 2); /* CRC_EN */
-  // bus.writeField(CC1101_REG_PKTCTRL1, (byte)en, 3, 3); /* Autoflush */
+  bus.writeField(CC1101_REG_PKTCTRL0, CC1101_READ, CC1101_WRITE, 2, 2, (byte)en); /* CRC_EN */
+  bus.writeField(CC1101_REG_PKTCTRL1, CC1101_READ, CC1101_WRITE, 3, 3, (byte)en); /* Autoflush */
 };
 void CC1101::setFEC(bool en) {
   if(isVariablePktLen) return;
-  bus.writeField(CC1101_REG_MDMCFG1, (byte)en, 7, 7);
+  bus.writeField(CC1101_REG_MDMCFG1, CC1101_READ, CC1101_WRITE, 7, 7, (byte)en);
 };
 void CC1101::setAddr(byte addr) {
-  bus.writeField(CC1101_REG_PKTCTRL1, addr > 0 ? 1 : 0, 1, 0);
-  bus.write(CC1101_REG_ADDR, addr);
+  bus.writeField(CC1101_REG_PKTCTRL1, CC1101_READ, CC1101_WRITE, 1, 0, addr > 0 ? 1 : 0);
+  bus.write(CC1101_REG_ADDR | CC1101_WRITE, addr);
 };
 void CC1101::setSync(CC1101_SyncMode syncMode, uint16_t syncWord, uint8_t preambleLen) {
-  bus.writeField(CC1101_REG_MDMCFG2, syncMode, 2, 0);
+  bus.writeField(CC1101_REG_MDMCFG2, CC1101_READ, CC1101_WRITE, 2, 0, syncMode);
 
-  bus.write(CC1101_REG_SYNC1, syncWord >> 8);
-  bus.write(CC1101_REG_SYNC0, syncWord & 0xff);
+  bus.write(CC1101_REG_SYNC1 | CC1101_WRITE, syncWord >> 8);
+  bus.write(CC1101_REG_SYNC0 | CC1101_WRITE, syncWord & 0xff);
 
-  bus.writeField(CC1101_REG_MDMCFG1, getPreambleIdx(preambleLen), 6, 4);
+  bus.writeField(CC1101_REG_MDMCFG1, CC1101_READ, CC1101_WRITE, 6, 4, getPreambleIdx(preambleLen));
 };
 void CC1101::setAutoCalib(bool en) {
-  bus.writeField(CC1101_REG_MCSM0, (byte)en, 5, 4);
+  bus.writeField(CC1101_REG_MCSM0, CC1101_READ, CC1101_WRITE, 5, 4, (byte)en);
 };
 void CC1101::setManchester(bool en) {
   if(mod != CC1101_MOD_MSK || mod != CC1101_MOD_4FSK)
-    bus.writeField(CC1101_REG_MDMCFG2, (byte)en, 3, 3);
+    bus.writeField(CC1101_REG_MDMCFG2, CC1101_READ, CC1101_WRITE, 3, 3, (byte)en);
 };
 void CC1101::setAppendStatus(bool en) {
-  bus.writeField(CC1101_REG_PKTCTRL1, (byte)en, 2, 2);
+  bus.writeField(CC1101_REG_PKTCTRL1, CC1101_READ, CC1101_WRITE, 2, 2, (byte)en);
 };
 void CC1101::setDataWhitening(bool en) {
-  bus.writeField(CC1101_REG_PKTCTRL0, (byte)en, 6, 6);
+  bus.writeField(CC1101_REG_PKTCTRL0, CC1101_READ, CC1101_WRITE, 6, 6, (byte)en);
 };
 void CC1101::setPktLen(uint8_t len) {
-  bus.write(CC1101_REG_PKTLEN, len);
+  bus.write(CC1101_REG_PKTLEN | CC1101_WRITE, len);
 };
 void CC1101::setPktLenMode(bool isVariablePktLen) {
-  bus.writeField(CC1101_REG_PKTCTRL0, (byte)isVariablePktLen, 1, 0); /* TODO: infinite */
+  bus.writeField(CC1101_REG_PKTCTRL0, CC1101_READ, CC1101_WRITE, 1, 0, (byte)isVariablePktLen); /* TODO: infinite */
 };
 void CC1101::setMod(CC1101_Modulation mod){
-  bus.writeField(CC1101_REG_MDMCFG2, (byte)mod, 6, 4);
+  bus.writeField(CC1101_REG_MDMCFG2, CC1101_READ, CC1101_WRITE, 6, 4, (byte)mod);
 };
 void CC1101::setFreq(float freq){
   uint32_t f = ((freq * 65536.0) / CC1101_CRYSTAL_FREQ); 
 
-  bus.write(CC1101_REG_FREQ0, f & 0xff);
-  bus.write(CC1101_REG_FREQ1, (f >> 8) & 0xff);
-  bus.write(CC1101_REG_FREQ2, (f >> 16) & 0xff);
+  bus.write(CC1101_REG_FREQ0 | CC1101_WRITE, f & 0xff);
+  bus.write(CC1101_REG_FREQ1 | CC1101_WRITE, (f >> 8) & 0xff);
+  bus.write(CC1101_REG_FREQ2 | CC1101_WRITE, (f >> 16) & 0xff);
 
   /* TODO Deviation */ 
-  // bus.writeField(CC1101_REG_DEVIATN, devE, 6, 4);
-  // bus.writeField(CC1101_REG_DEVIATN, devM, 2, 0);
+  // bus.writeField(CC1101_REG_DEVIATN, CC1101_READ, CC1101_WRITE, 6, 4, devE);
+  // bus.writeField(CC1101_REG_DEVIATN, CC1101_READ, CC1101_WRITE, 2, 0, devM);
 };
 void CC1101::setDrate(float drate){
   uint32_t xosc = CC1101_CRYSTAL_FREQ * 1000;
@@ -264,25 +257,25 @@ void CC1101::setDrate(float drate){
     e++;
   }
 
-  bus.writeField(CC1101_REG_MDMCFG4, e, 3, 0);
-  bus.writeField(CC1101_REG_MDMCFG3, (byte)m, 7, 0);
-  // bus.write(CC1101_REG_MDMCFG3, (byte)m);
+  bus.writeField(CC1101_REG_MDMCFG4, CC1101_READ, CC1101_WRITE, 3, 0, e);
+  bus.writeField(CC1101_REG_MDMCFG3, CC1101_READ, CC1101_WRITE, 7, 0, (byte)m);
+  // bus.write(CC1101_REG_MDMCFG3 | CC1101_WRITE, (byte)m);
 };
 void CC1101::setPwr(CC1101_FreqBand freqBand, CC1101_PowerMW pwr, const uint8_t pwrTable[][8]){
   if(mod == CC1101_MOD_ASK_OOK) {
     uint8_t paTable[2] = {CC1101_WRITE, pwrTable[freqBand][pwr]};
-    bus.writeBurst(CC1101_REG_PATABLE, paTable, 2);
-    bus.writeField(CC1101_REG_FREND0, 1, 2, 0);
+    bus.writeBurst(CC1101_REG_PATABLE | CC1101_WRITE_BURST, paTable, 2);
+    bus.writeField(CC1101_REG_FREND0, CC1101_READ, CC1101_WRITE, 2, 0, 1);
   } else {
-    bus.write(CC1101_REG_PATABLE, pwrTable[freqBand][pwr]);
-    bus.writeField(CC1101_REG_FREND0, 0, 2, 0);
+    bus.write(CC1101_REG_PATABLE | CC1101_WRITE, pwrTable[freqBand][pwr]);
+    bus.writeField(CC1101_REG_FREND0, CC1101_READ, CC1101_WRITE, 2, 0, 0);
   }
   // if(mod == CC1101_MOD_ASK_OOK) {
-  //   bus.writeField(CC1101_REG_FREND0, 1, 2, 0);
+  //   bus.writeField(CC1101_REG_FREND0, CC1101_READ, CC1101_WRITE, 2, 0, 1);
   // } else {
-  //   bus.writeField(CC1101_REG_FREND0, 0, 2, 0);
+  //   bus.writeField(CC1101_REG_FREND0, CC1101_READ, CC1101_WRITE, 2, 0, 0);
   // }
-  // bus.write(CC1101_REG_PATABLE, pwrTable[freqBand][pwr]);
+  // bus.write(CC1101_REG_PATABLE | CC1101_WRITE, pwrTable[freqBand][pwr]);
 };
 void CC1101::setIdleState() {
   if (getState() == STATE_IDLE) return;
@@ -310,9 +303,9 @@ void CC1101::setTxState() {
     }
 };
 void CC1101::setTwoWay() {
-    bus.writeField(CC1101_REG_MCSM1, 0, 5, 4); // Disabl CCA
-    bus.writeField(CC1101_REG_MCSM1, 3, 1, 0); // Set TXOFF to RX
-    bus.writeField(CC1101_REG_MCSM1, 2, 3, 2); // Set RXOFF to TX
+    bus.writeField(CC1101_REG_MCSM1, CC1101_READ, CC1101_WRITE, 5, 4, 0); // Disabl CCA
+    bus.writeField(CC1101_REG_MCSM1, CC1101_READ, CC1101_WRITE, 1, 0, 3); // Set TXOFF to RX
+    bus.writeField(CC1101_REG_MCSM1, CC1101_READ, CC1101_WRITE, 3, 2, 2); // Set RXOFF to TX
 };
 
 bool CC1101::enoughRxBytes(uint8_t len) {
@@ -329,7 +322,7 @@ bool CC1101::waitForRxBytes(uint8_t len, size_t timeoutMs) {
       if((timer + timeoutMs) < millis()) {
         Serial.println("Waiting for rxbytes timeout");
         setIdleState();
-        getState(); // Magic trick
+        // getState(); // Magic trick
         return false;
       }
       delayMicroseconds(50);
@@ -341,14 +334,14 @@ bool CC1101::waitForRxBytes(uint8_t len, size_t timeoutMs) {
 };
 bool CC1101::readRxFifo(uint8_t *buff, uint8_t len) {
   if(isVariablePktLen) {
-    len = bus.read(CC1101_REG_FIFO);
+    len = bus.read(CC1101_REG_FIFO | CC1101_READ);
   }
   bus.readBurst(CC1101_REG_FIFO | CC1101_READ_BURST, buff, len);
   if(isAppendStatus) {
-    uint8_t r = bus.read(CC1101_REG_FIFO);
+    uint8_t r = bus.read(CC1101_REG_FIFO | CC1101_READ);
     if(r >= 128) rssi = ((rssi - 256) / 2) - CC1101_RSSI_OFFSET;
     else rssi = (rssi / 2) - CC1101_RSSI_OFFSET;
-    lqi = bus.read(CC1101_REG_FIFO) & 0x7f;
+    lqi = bus.read(CC1101_REG_FIFO | CC1101_READ) & 0x7f;
     if(!(r >> 7) & 1) { 
       Serial.println("CRC Mismatch");
       return false; // CRC Mismatch
@@ -358,10 +351,10 @@ bool CC1101::readRxFifo(uint8_t *buff, uint8_t len) {
 };
 void CC1101::writeTxFifo(uint8_t *buff, uint8_t len) {
   if(isVariablePktLen) {
-    bus.write(CC1101_REG_FIFO, len);
+    bus.write(CC1101_REG_FIFO | CC1101_WRITE, len);
   }  
   if(addr > 0) {
-    bus.write(CC1101_REG_FIFO, addr);
+    bus.write(CC1101_REG_FIFO | CC1101_WRITE, addr);
   }
   bus.writeBurst(CC1101_REG_FIFO | CC1101_WRITE_BURST, buff, len);
 };

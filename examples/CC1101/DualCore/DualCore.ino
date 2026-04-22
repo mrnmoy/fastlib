@@ -60,7 +60,7 @@ void txTask(void *pvParameters) {
                CC1101_SYNC_MODE_16_16,  // sync mode
                0x1234,                  // sync word
                64,                      // preamble length
-               false,                   // crc
+               true,                    // crc
                false,                   // fec
                true,                    // auto calib
                false,                   // manchester
@@ -116,7 +116,7 @@ void rxTask(void *pvParameters) {
                CC1101_SYNC_MODE_16_16,  // sync mode
                0x1234,                  // sync word
                64,                      // preamble length
-               false,                   // crc
+               true,                    // crc
                false,                   // fec
                true,                    // auto calib
                false,                   // manchester
