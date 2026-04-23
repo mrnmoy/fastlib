@@ -31,8 +31,6 @@ void setup() {
     NULL,
     0);
 
-  delay(500);
-
   xTaskCreatePinnedToCore(
     rxTask,
     "RX Task",
@@ -51,9 +49,9 @@ void txTask(void *pvParameters) {
   Serial.println(xPortGetCoreID());
 
   SPIClass fspi(FSPI);
-  CC1101 radio(CC1101_MOD_GFSK,         // mod
+  CC1101 radio(CC1101_MOD_2FSK,         // mod
                433.8,                   // freq
-               10,                      // drate
+               26.0,                    // drate
                CC1101_POWER_3MW,        // pwr
                0,                       // addr
                64,                      // pktlen
@@ -91,7 +89,7 @@ void txTask(void *pvParameters) {
   byte buff[4] = { 200, 201, 202, 203 };
 
   while (true) {
-    if (radio.write(buff)) {
+    if (radio.write(buff, 4)) {
       Serial.printf("Sending pkt: [%d, %d, %d, %d]", buff[0], buff[1], buff[2], buff[3]);
     } else {
       Serial.print("Error sending tx packet");
@@ -107,9 +105,9 @@ void rxTask(void *pvParameters) {
   Serial.println(xPortGetCoreID());
 
   SPIClass hspi(HSPI);
-  CC1101 radio(CC1101_MOD_GFSK,         // mod
+  CC1101 radio(CC1101_MOD_2FSK,         // mod
                433.8,                   // freq
-               10,                      // drate
+               26.0,                    // drate
                CC1101_POWER_3MW,        // pwr
                0,                       // addr
                64,                      // pktlen
@@ -147,7 +145,7 @@ void rxTask(void *pvParameters) {
   byte buff[4];
 
   while (true) {
-    if (radio.read(buff)) {
+    if (radio.read(buff, 4, 2000)) {
       Serial.printf("Received: [%d, %d, %d, %d], Rssi: %d, Lqi: %d", buff[0], buff[1], buff[2], buff[3], radio.rssi, radio.lqi);
     } else {
       Serial.print("Error receiving rx pkt");

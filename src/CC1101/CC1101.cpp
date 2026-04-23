@@ -59,7 +59,6 @@ bool CC1101::write(uint8_t *buff){
 };
 bool CC1101::write(uint8_t *buff, uint8_t len){
   setIdleState();
-  setPktLenMode(false);
   setPktLen(len);
   flushTxBuff();
   setTxState();
@@ -128,7 +127,7 @@ void CC1101::reset() {
   delayMicroseconds(40);
 
   bus.strobe(CC1101_REG_RES | CC1101_WRITE_BURST);
-}
+};
 void CC1101::flushRxBuff(){
   if(getState() != (STATE_IDLE || STATE_RXFIFO_OVERFLOW)) return;
   bus.strobe(CC1101_REG_FRX | CC1101_WRITE_BURST);
@@ -322,7 +321,6 @@ bool CC1101::waitForRxBytes(uint8_t len, size_t timeoutMs) {
       if((timer + timeoutMs) < millis()) {
         Serial.println("Waiting for rxbytes timeout");
         setIdleState();
-        // getState(); // Magic trick
         return false;
       }
       delayMicroseconds(50);

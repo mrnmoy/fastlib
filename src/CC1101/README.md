@@ -1,11 +1,20 @@
-# FastRadio
+# CC1101 🚀
 
-### Supported Radios:
+Simple yet fast implementation of CC1101.  
 
-- CC1101
+## ✨ Features
 
-### Planned:
+| Modulation | Datarate  | Supported |
+| -------- | ------------ | -- |
+| 2FSK     | 0.6 - 500.0  | ✅ |
+| 4FSK     | 0.6 - 300.0  | ✅ |
+| GFSK     | 0.6 - 250.0  | ✅ |
+| MSK      | 26.0 - 500.0 | ❌ |
+| ASK/OOK  | 0.6 - 250.0  | ❌ |
 
-- NRF24
-
-- SX1278
+| Frequency Band | Frequency | Supported |
+| ----- | ------------- | -- |
+| 315   | 300.0 - 348.0 | ✅ |
+| 433   | 387.0 - 464.0 | ✅ |
+| 868   | 779.0 - 891.5 | ✅ |
+| 915   | 896.6 - 928.0 | ✅ |
