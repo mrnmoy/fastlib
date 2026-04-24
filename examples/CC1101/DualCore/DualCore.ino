@@ -51,7 +51,7 @@ void txTask(void *pvParameters) {
   SPIClass fspi(FSPI);
   CC1101 radio(CC1101_MOD_2FSK,         // mod
                433.8,                   // freq
-               26.0,                    // drate
+               10,                      // drate
                CC1101_POWER_3MW,        // pwr
                0,                       // addr
                64,                      // pktlen
@@ -64,7 +64,7 @@ void txTask(void *pvParameters) {
                false,                   // manchester
                true,                    // append status
                false,                   // data whitening
-               true,                    // variable packet length
+               false,                   // variable packet length
                TX_SS,                   // ss/cs pin
                FSPI_MISO,               // miso pin
                fspi);                   // spi class
@@ -107,7 +107,7 @@ void rxTask(void *pvParameters) {
   SPIClass hspi(HSPI);
   CC1101 radio(CC1101_MOD_2FSK,         // mod
                433.8,                   // freq
-               26.0,                    // drate
+               10,                      // drate
                CC1101_POWER_3MW,        // pwr
                0,                       // addr
                64,                      // pktlen
@@ -120,7 +120,7 @@ void rxTask(void *pvParameters) {
                false,                   // manchester
                true,                    // append status
                false,                   // data whitening
-               true,                    // variable packet length
+               false,                   // variable packet length
                RX_SS,                   // ss/cs pin
                HSPI_MISO,               // miso pin
                hspi);                   // spi class

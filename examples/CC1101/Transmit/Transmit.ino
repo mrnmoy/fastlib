@@ -1,10 +1,14 @@
 #include <SPI.h>
 #include <fastlib.h>
 
-#define SCK 7
-#define MISO 5
-#define MOSI 16
-#define SS 18
+// #define SCK 7
+// #define MISO 5
+// #define MOSI 16
+// #define SS 18
+#define MISO 4
+#define MOSI 15
+#define SCK 6
+#define SS 17
 
 CC1101 radio(CC1101_MOD_2FSK,         // mod
              433.8,                   // freq
