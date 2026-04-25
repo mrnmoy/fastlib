@@ -9,7 +9,7 @@ Simple yet fast implementation of CC1101.
 | 2FSK     | 0.6 - 500.0  | ✅ |
 | 4FSK     | 0.6 - 300.0  | ✅ |
 | GFSK     | 0.6 - 250.0  | ✅ |
-| MSK      | 26.0 - 500.0 | ❌ |
+| MSK      | 26.0 - 500.0 | ✅ |
 | ASK/OOK  | 0.6 - 250.0  | ❌ |
 
 | Frequency Band | Frequency | Supported |

@@ -29,14 +29,14 @@ void setup() {
     NULL,
     1,
     NULL,
-    0);
+    1);
 
   xTaskCreatePinnedToCore(
     rxTask,
     "RX Task",
     10000,
     NULL,
-    20,
+    1,
     NULL,
     1);
 
@@ -49,9 +49,9 @@ void txTask(void *pvParameters) {
   Serial.println(xPortGetCoreID());
 
   SPIClass fspi(FSPI);
-  CC1101 radio(CC1101_MOD_2FSK,         // mod
+  CC1101 radio(CC1101_MOD_MSK,          // mod
                433.8,                   // freq
-               10,                      // drate
+               28,                      // drate
                CC1101_POWER_3MW,        // pwr
                0,                       // addr
                64,                      // pktlen
@@ -105,9 +105,9 @@ void rxTask(void *pvParameters) {
   Serial.println(xPortGetCoreID());
 
   SPIClass hspi(HSPI);
-  CC1101 radio(CC1101_MOD_2FSK,         // mod
+  CC1101 radio(CC1101_MOD_MSK,          // mod
                433.8,                   // freq
-               10,                      // drate
+               28,                      // drate
                CC1101_POWER_3MW,        // pwr
                0,                       // addr
                64,                      // pktlen
