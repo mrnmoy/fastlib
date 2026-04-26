@@ -131,8 +131,10 @@ class CC1101 {
 
   bool begin();
 
-  bool read(uint8_t *buff, size_t timeoutMs = 0);
-  bool read(uint8_t *buff, uint8_t len, size_t timeoutMs = 0);
+  bool read(uint8_t *buff);
+  bool read(uint8_t *buff, uint8_t len);
+  bool readUntil(uint8_t *buff, size_t timeoutMs);
+  bool readUntil(uint8_t *buff, uint8_t len, size_t timeoutMs);
   bool write(uint8_t *buff);
   bool write(uint8_t *buff, uint8_t len);
   bool link(uint8_t *txBuff, uint8_t *rxBuff, size_t timeoutMs = 500);
@@ -172,7 +174,7 @@ class CC1101 {
       [6]                  = {  0.0, 0.0   },
       [CC1101_MOD_MSK]     = { 26.0, 500.0 }
     };
-    inline static const uint8_t powerTable[][8] = {
+    inline static const byte powerTable[][8] = {
       [CC1101_FREQ_BAND_315] = { 0x12, 0x0d, 0x1c, 0x34, 0x51, 0x85, 0xcb, 0xc2 },
       [CC1101_FREQ_BAND_433] = { 0x12, 0x0e, 0x1d, 0x34, 0x60, 0x84, 0xc8, 0xc0 },
       [CC1101_FREQ_BAND_868] = { 0x03, 0x0f, 0x1e, 0x27, 0x50, 0x81, 0xcb, 0xc2 },
@@ -230,6 +232,7 @@ class CC1101 {
     void setTwoWay();
 
     bool enoughRxBytes(uint8_t len);
+    void waitForRxBytes(uint8_t len);
     bool waitForRxBytes(uint8_t len, size_t timeoutMs);
     bool readRxFifo(uint8_t *buff, uint8_t len);
     void writeTxFifo(uint8_t *buff, uint8_t len);

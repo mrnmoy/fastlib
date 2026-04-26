@@ -56,14 +56,14 @@ void txTask(void *pvParameters) {
                0,                       // addr
                64,                      // pktlen
                CC1101_SYNC_MODE_16_16,  // sync mode
-               0x1234,                  // sync word
+               0x9999,                  // sync word
                64,                      // preamble length
                true,                    // crc
-               false,                   // fec
+               true,                    // fec
                true,                    // auto calib
                false,                   // manchester
-               true,                    // append status
-               false,                   // data whitening
+               false,                   // append status
+               true,                    // data whitening
                false,                   // variable packet length
                TX_SS,                   // ss/cs pin
                FSPI_MISO,               // miso pin
@@ -112,14 +112,14 @@ void rxTask(void *pvParameters) {
                0,                       // addr
                64,                      // pktlen
                CC1101_SYNC_MODE_16_16,  // sync mode
-               0x1234,                  // sync word
+               0x9999,                  // sync word
                64,                      // preamble length
                true,                    // crc
-               false,                   // fec
+               true,                    // fec
                true,                    // auto calib
                false,                   // manchester
-               true,                    // append status
-               false,                   // data whitening
+               false,                   // append status
+               true,                    // data whitening
                false,                   // variable packet length
                RX_SS,                   // ss/cs pin
                HSPI_MISO,               // miso pin
